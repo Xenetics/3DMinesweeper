@@ -286,30 +286,24 @@ void CrateApp::UpdateScene(float dt)
 	// Control the camera.
 	//
 	if (GetAsyncKeyState('W') & 0x8000)
+	{
 		//mCam.Walk(10.0f*dt);
-
+		mCam.OrbitVertical(1*dt);
+	}
 	if (GetAsyncKeyState('S') & 0x8000)
-		mCam.Walk(-10.0f*dt);
-
+	{
+		//mCam.Walk(-10.0f*dt);
+		mCam.OrbitVertical(-1 * dt);
+	}
 	if (GetAsyncKeyState('A') & 0x8000)
-		mCam.Strafe(-10.0f*dt);
-
+	{
+		//mCam.Strafe(-10.0f*dt);
+		mCam.OrbitHorizontal(-1 * dt);
+	}
 	if (GetAsyncKeyState('D') & 0x8000)
 	{
 		//mCam.Strafe(10.0f*dt);
-		//orbit around center of world.
-		//mCam.OrbitHorizontal(2 * dt);
-
-		// Make each pixel correspond to a quarter of a degree.
-		float dx = XMConvertToRadians(0.25f*static_cast<float>(x - mLastMousePos.x));
-		float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
-
-		// Update angles based on input to orbit camera around box.
-		mTheta += dx;
-		mPhi += dy;
-		// Restrict the angle mPhi.
-		mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
-
+		mCam.OrbitHorizontal(1*dt);
 	}
 
 	if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
@@ -792,6 +786,7 @@ void CrateApp::CreateMenu()
 
 	//PLAY BUTTON
 	Cube * playButton = new Cube; //creates new block
+
 	playButton->pos = XMVectorSet(0, 3, 5, 1); //set the position in world space for the cube
 	XMMATRIX boxScale = XMMatrixScaling(5.0f, 1.0f, 1.0f); //set the scale of the button
 	XMStoreFloat4x4(&mBoxWorld, XMMatrixMultiply(boxScale, XMMatrixTranslationFromVector(playButton->pos)));
