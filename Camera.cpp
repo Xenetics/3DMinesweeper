@@ -203,6 +203,24 @@ void Camera::RotateY(float angle)
 	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), R));
 }
 
+void Camera::OrbitHorizontal(float angle)
+{
+	XMMATRIX matrixRot = XMMatrixRotationY(angle);
+	//XMMATRIX matrixTrans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+	XMMATRIX matrixFinal = matrixRot;// *matrixTrans;
+	XMStoreFloat3(&mPosition, XMVector3TransformNormal(XMLoadFloat3(&mPosition), matrixFinal));
+	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), matrixFinal));
+}
+
+void Camera::OrbitVertical(float angle)
+{
+	XMMATRIX matrixRot = XMMatrixRotationX(angle);
+	//XMMATRIX matrixTrans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+	XMMATRIX matrixFinal = matrixRot;// *matrixTrans;
+	XMStoreFloat3(&mPosition, XMVector3TransformNormal(XMLoadFloat3(&mPosition), matrixFinal));
+	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), matrixFinal));
+}
+
 void Camera::UpdateViewMatrix()
 {
 	XMVECTOR R = XMLoadFloat3(&mRight);

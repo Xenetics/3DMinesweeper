@@ -182,7 +182,7 @@ mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), m
 	//XMMATRIX MeshOffset = XMMatrixTranslation(0.0f, 1.0f, 0.0f);
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixMultiply(MeshScale, MeshOffset));
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixTranslation(levelWidth*0.5f, levelLength * 0.5f, levelHeight * 0.5f));
-	mCam.SetPosition(0.0f, 5.0f, -15.0f);
+	mCam.SetPosition(0.0f, 0.0f, -15.0f);
 
 	
 }
@@ -286,30 +286,24 @@ void CrateApp::UpdateScene(float dt)
 	// Control the camera.
 	//
 	if (GetAsyncKeyState('W') & 0x8000)
+	{
 		//mCam.Walk(10.0f*dt);
-
+		mCam.OrbitVertical(1*dt);
+	}
 	if (GetAsyncKeyState('S') & 0x8000)
-		mCam.Walk(-10.0f*dt);
-
+	{
+		//mCam.Walk(-10.0f*dt);
+		mCam.OrbitVertical(-1 * dt);
+	}
 	if (GetAsyncKeyState('A') & 0x8000)
-		mCam.Strafe(-10.0f*dt);
-
+	{
+		//mCam.Strafe(-10.0f*dt);
+		mCam.OrbitHorizontal(-1 * dt);
+	}
 	if (GetAsyncKeyState('D') & 0x8000)
 	{
 		//mCam.Strafe(10.0f*dt);
-		//orbit around center of world.
-		//mCam.OrbitHorizontal(2 * dt);
-
-		// Make each pixel correspond to a quarter of a degree.
-		float dx = XMConvertToRadians(0.25f*static_cast<float>(x - mLastMousePos.x));
-		float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
-
-		// Update angles based on input to orbit camera around box.
-		mTheta += dx;
-		mPhi += dy;
-		// Restrict the angle mPhi.
-		mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
-
+		mCam.OrbitHorizontal(1*dt);
 	}
 
 	if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
@@ -780,8 +774,8 @@ void CrateApp::CreateMenu()
 {
 	//PLAY BUTTON
 	Cube * playButton = new Cube; //creates new block
-	playButton->pos = XMVectorSet(1,1,1,1); //set the position in world space for the cube
-	XMMATRIX boxScale = XMMatrixScaling(5.0f, 1.0f, 1.0f); //set the scale of the button
+	playButton->pos = XMVectorSet(-0.55f,-0.55f,-0.55f,1); //set the position in world space for the cube
+	XMMATRIX boxScale = XMMatrixScaling(1.0f, 1.0f, 1.0f); //set the scale of the button
 	XMStoreFloat4x4(&mBoxWorld, XMMatrixMultiply(boxScale, XMMatrixTranslationFromVector(playButton->pos)));
 	XMStoreFloat3(&playButton->mMeshBox.Center, playButton->pos); //sets the center of the mesh box for click detection
 	XMVECTOR halfSize = XMVectorSet(2.5f, 0.5f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
