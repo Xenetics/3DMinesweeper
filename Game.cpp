@@ -285,25 +285,28 @@ void CrateApp::UpdateScene(float dt)
 	//
 	// Control the camera.
 	//
-	if (GetAsyncKeyState('W') & 0x8000)
+	if (!menu) //disables camera control when viewing the menu
 	{
-		//mCam.Walk(10.0f*dt);
-		mCam.OrbitVertical(1*dt);
-	}
-	if (GetAsyncKeyState('S') & 0x8000)
-	{
-		//mCam.Walk(-10.0f*dt);
-		mCam.OrbitVertical(-1 * dt);
-	}
-	if (GetAsyncKeyState('A') & 0x8000)
-	{
-		//mCam.Strafe(-10.0f*dt);
-		mCam.OrbitHorizontal(-1 * dt);
-	}
-	if (GetAsyncKeyState('D') & 0x8000)
-	{
-		//mCam.Strafe(10.0f*dt);
-		mCam.OrbitHorizontal(1*dt);
+		if (GetAsyncKeyState('W') & 0x8000)
+		{
+			//mCam.Walk(10.0f*dt);
+			mCam.OrbitVertical(1 * dt);
+		}
+		if (GetAsyncKeyState('S') & 0x8000)
+		{
+			//mCam.Walk(-10.0f*dt);
+			mCam.OrbitVertical(-1 * dt);
+		}
+		if (GetAsyncKeyState('A') & 0x8000)
+		{
+			//mCam.Strafe(-10.0f*dt);
+			mCam.OrbitHorizontal(-1 * dt);
+		}
+		if (GetAsyncKeyState('D') & 0x8000)
+		{
+			//mCam.Strafe(10.0f*dt);
+			mCam.OrbitHorizontal(1 * dt);
+		}
 	}
 
 	if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
