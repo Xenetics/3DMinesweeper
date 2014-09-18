@@ -23,6 +23,7 @@
 *.lai
 *.la
 *.a
+*.lib
 
 # Executables
 *.exe
@@ -232,8 +233,3 @@ $RECYCLE.BIN/
 *.msi
 *.msm
 *.msp
-
-
-# Direct X 
-*.cod
-*.fxo
