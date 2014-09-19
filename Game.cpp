@@ -107,19 +107,14 @@ private:
 	int timer = 0;
 	int whichIMG = 0;
 
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/master
 	// enum for difficulties
 	enum difficulty
 	{
-		easy, medium, hard
+		NONE, EASY, MEDIUM, HARD
 	};
-<<<<<<< HEAD
-=======
+	// Curreny difficulty state
+	difficulty diffState = NONE;
 
->>>>>>> origin/master
 	//FMOD stuff
 	FMOD::System *system;
 	FMOD_RESULT result;
@@ -128,10 +123,6 @@ private:
 	int               key;
 	unsigned int      version;
 
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/master
 public:
 	// Define transformations from local spaces to world space.
 	XMFLOAT4X4 mMeshWorld;
@@ -545,6 +536,13 @@ void CrateApp::DrawScene()
 		mDirLights[1].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 16.0f);
 		mDirLights[1].Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
 		Effects::BasicFX->SetDirLights(mDirLights);
+
+		mPointLights[0].Ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+		mPointLights[0].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+		mPointLights[0].Specular = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+		mPointLights[0].Att = XMFLOAT3(0.4f, 0.2f, 0.0f);
+		mPointLights[0].Position = XMFLOAT3(0.0f, 1.0f, 15.0f);
+		mPointLights[0].Range = 20.0f;
 	}
 	//Effects::BasicFX->SetEyePosW(mEyePosW);
 	Effects::BasicFX->SetEyePosW(mCam.GetPosition());
