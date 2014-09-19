@@ -1,11 +1,10 @@
 //***************************************************************************************
-// CrateDemo.cpp by Frank Luna (C) 2011 All Rights Reserved.
+// 
 //
-// Demonstrates texturing a box.
 //
-// Controls:
-//		Hold the left mouse button down and move the mouse to rotate.
-//      Hold the right mouse button down to zoom in and out.
+// 
+//		
+//      
 //
 //***************************************************************************************
 
@@ -72,7 +71,8 @@ private:
 	LPCTSTR num;
 
 
-	DirectionalLight mDirLights[3];
+	DirectionalLight mDirLights[2];
+	PointLight mPointLights[2];
 	Material mBoxMat;
 
 	XMFLOAT4X4 mTexTransform;
@@ -166,6 +166,13 @@ mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), m
 	mDirLights[1].Diffuse  = XMFLOAT4(1.4f, 1.4f, 1.4f, 1.0f);
 	mDirLights[1].Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 16.0f);
 	mDirLights[1].Direction = XMFLOAT3(-0.707f, 0.0f, 0.707f);
+
+	mPointLights[0].Ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	mPointLights[0].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	mPointLights[0].Specular = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	mPointLights[0].Att = XMFLOAT3(0.4f, 0.2f, 0.0f);
+	mPointLights[0].Position = XMFLOAT3(0.0f, 1.0f, 15.0f);
+	mPointLights[0].Range = 20.0f;
 
 	mBoxMat.Ambient  = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	mBoxMat.Diffuse  = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -349,7 +356,32 @@ void CrateApp::DrawScene()
 	XMMATRIX viewProj = mCam.ViewProj();
 
 	// Set per frame constants.
-	Effects::BasicFX->SetDirLights(mDirLights);
+	if (!menu)
+	{
+		mDirLights[0].Ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+		mDirLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+		mDirLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
+		mDirLights[0].Direction = XMFLOAT3(0.707f, -0.707f, 0.0f);
+
+		mDirLights[1].Ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+		mDirLights[1].Diffuse = XMFLOAT4(1.4f, 1.4f, 1.4f, 1.0f);
+		mDirLights[1].Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 16.0f);
+		mDirLights[1].Direction = XMFLOAT3(-0.707f, 0.0f, 0.707f);
+		Effects::BasicFX->SetDirLights(mDirLights);
+	}
+	else
+	{
+		mDirLights[0].Ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+		mDirLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+		mDirLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
+		mDirLights[0].Direction = XMFLOAT3(0.0f, 0.0f, 0.7f);
+
+		mDirLights[1].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+		mDirLights[1].Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+		mDirLights[1].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 16.0f);
+		mDirLights[1].Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
+		Effects::BasicFX->SetDirLights(mDirLights);
+	}
 	//Effects::BasicFX->SetEyePosW(mEyePosW);
 	Effects::BasicFX->SetEyePosW(mCam.GetPosition());
  
