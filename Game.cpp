@@ -24,6 +24,9 @@
 #include <cstdlib>
 #include <algorithm>
 
+#include "fmod.hpp"
+#include "fmod_errors.h"
+
 #define EPSILON 0.00001
 
 struct Cube
@@ -59,6 +62,9 @@ public:
 private:
 	void BuildGeometryBuffers();
 
+	void InitFMOD();
+	void UpdateSound();
+
 private:
 	ID3D11Buffer* mBoxVB;
 	ID3D11Buffer* mBoxIB;
@@ -68,6 +74,10 @@ private:
 	ID3D11ShaderResourceView* mDiffuseMapSRV3[120];
 	ID3D11ShaderResourceView* mDiffuseMapSRV4;
 	ID3D11ShaderResourceView* mDiffuseMapSRV5;
+	ID3D11ShaderResourceView* mDiffuseMapSRVMenuButtons[8];
+	enum menuButtons {LOGO,PLAY,EASY,MEDIUM,HARD,EXIT,SOUND,MUSIC};
+	menuButtons button;
+
 	LPCTSTR num;
 
 	// Lighting variables
@@ -97,11 +107,22 @@ private:
 	int timer = 0;
 	int whichIMG = 0;
 
+<<<<<<< HEAD
 	// enum for difficulties
 	enum difficulty
 	{
 		easy, medium, hard
 	};
+=======
+	//FMOD stuff
+	FMOD::System *system;
+	FMOD_RESULT result;
+	FMOD::Sound      *sound1, *sound2, *sound3, *music;
+	FMOD::Channel    *channel1, *channel2, *channel3, *musicChannel;
+	int               key;
+	unsigned int      version;
+
+>>>>>>> origin/master
 public:
 	// Define transformations from local spaces to world space.
 	XMFLOAT4X4 mMeshWorld;
@@ -130,7 +151,17 @@ public:
 	void CreateMenu();
 	bool menu = true;
 	void CleanLevel(); //cleans the level data before loading new level
+	void InitTextures();
 };
+
+void ERRCHECK(FMOD_RESULT result)
+{
+	if (result != FMOD_OK)
+	{
+		printf("FMOD error! (%d) %s\n", result, FMOD_ErrorString(result));
+		exit(-1);
+	}
+}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 				   PSTR cmdLine, int showCmd)
@@ -221,6 +252,131 @@ CrateApp::~CrateApp()
 
 	Effects::DestroyAll();
 	InputLayouts::DestroyAll();
+
+	//Clean up FMOD
+	result = sound1->release();
+	ERRCHECK(result);
+	result = sound2->release();
+	ERRCHECK(result);
+	result = sound3->release();
+	ERRCHECK(result);
+	result = system->close();
+	ERRCHECK(result);
+	result = system->release();
+	ERRCHECK(result);
+}
+
+void CrateApp::InitFMOD()
+{
+	result = FMOD::System_Create(&system);
+	ERRCHECK(result);
+
+	result = system->getVersion(&version);
+	ERRCHECK(result);
+
+	if (version < FMOD_VERSION)
+	{
+		printf("Error!  You are using an old version of FMOD %08x.  This program requires %08x\n", version, FMOD_VERSION);
+		return;
+	}
+
+	int numdrivers = 0;
+	char name[256];
+	FMOD_CAPS caps;
+	FMOD_SPEAKERMODE speakermode;
+
+	result = system->getNumDrivers(&numdrivers);
+	ERRCHECK(result);
+	if (numdrivers == 0)
+	{
+		result = system->setOutput(FMOD_OUTPUTTYPE_NOSOUND);
+		ERRCHECK(result);
+	}
+	else
+	{
+		result - system->getDriverCaps(0, &caps, 0, &speakermode);
+		ERRCHECK(result);
+		//set the user selected speaker mode.
+		result = system->setSpeakerMode(speakermode);
+		ERRCHECK(result);
+		if (caps & FMOD_CAPS_HARDWARE_EMULATED)
+		{
+			/*
+			The user has the 'Acceleration' slider set to off! This is really bad
+			for latency! You might want to warn the user about this.
+			*/
+			result = system->setDSPBufferSize(1024, 10);
+			ERRCHECK(result);
+		}
+		result = system->getDriverInfo(0, name, 256, 0);
+		ERRCHECK(result);
+		if (strstr(name, "SigmaTel"))
+		{
+			/*
+			Sigmatel sound devices crackle for some reason if the format is PCM 16bit.
+			PCM floating point output seems to solve it.
+			*/
+			result = system->setSoftwareFormat(48000, FMOD_SOUND_FORMAT_PCMFLOAT, 0, 0,
+				FMOD_DSP_RESAMPLER_LINEAR);
+			ERRCHECK(result);
+		}
+	}
+	result = system->init(100, FMOD_INIT_NORMAL, 0);
+	if (result == FMOD_ERR_OUTPUT_CREATEBUFFER)
+	{
+		/*
+		Ok, the speaker mode selected isn't supported by this soundcard. Switch it
+		back to stereo...
+		*/
+		result = system->setSpeakerMode(FMOD_SPEAKERMODE_STEREO);
+		ERRCHECK(result);
+		/*
+		... and re-init.
+		*/
+		result = system->init(100, FMOD_INIT_NORMAL, 0);
+	}
+	ERRCHECK(result);
+
+	result = system->createStream("testMusic.mp3", FMOD_HARDWARE | FMOD_LOOP_NORMAL | FMOD_2D, 0, &music);
+
+	ERRCHECK(result);
+
+	result = system->playSound(FMOD_CHANNEL_FREE, music, false, &musicChannel);
+	ERRCHECK(result);
+
+	//set volume on the channel
+	result = musicChannel->setVolume(0.05f);
+	ERRCHECK(result);
+
+	channel1 = 0;
+	channel2 = 0;
+	channel3 = 0;
+}
+
+void CrateApp::InitTextures()
+{
+	//Menu Textures
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[0], 0)); //LOGO
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[1], 0)); //PLAY
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[2], 0)); //EASY
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[3], 0)); //MEDIUM
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[4], 0)); //HARD
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[5], 0)); //EXIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[6], 0)); //SOUND
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[7], 0)); //MUSIC
+
+	//Game Textures
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
+		L"Textures/MetalBox.jpg", 0, 0, &mDiffuseMapSRV, 0));
+
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
+		L"Textures/rock.dds", 0, 0, &mDiffuseMapSRV2, 0));
+
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
+		L"Textures/diamond.png", 0, 0, &mDiffuseMapSRV4, 0));
+
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
+		L"Textures/sand.jpg", 0, 0, &mDiffuseMapSRV5, 0));
 }
 
 bool CrateApp::Init()
@@ -232,17 +388,7 @@ bool CrateApp::Init()
 	Effects::InitAll(md3dDevice);
 	InputLayouts::InitAll(md3dDevice);
 
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, 
-		L"Textures/MetalBox.jpg", 0, 0, &mDiffuseMapSRV, 0 ));
-
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
-		L"Textures/rock.dds", 0, 0, &mDiffuseMapSRV2, 0));
-
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
-		L"Textures/diamond.png", 0, 0, &mDiffuseMapSRV4, 0));
-
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
-		L"Textures/sand.jpg", 0, 0, &mDiffuseMapSRV5, 0));
+	InitTextures();
 
 	std::wstring filename = L"Textures/FireAnim/Fire";
 	for (int i = 1; i < 121; i++)
@@ -491,20 +637,29 @@ void CrateApp::DrawScene()
 				//Effects::BasicFX->SetDiffuseMap2(mDiffuseMapSRV2);
 				switch (cubes[i]->texture) //show texture of cube
 				{
-				case 0:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV); //grass
+				case LOGO:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[0]);
 					break;
-				case 1:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV2); //stone
+				case PLAY:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[1]);
 					break;
-				case 2:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV3[whichIMG]); //fire
+				case EASY:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[2]);
 					break;
-				case 3:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV4); //diamond
+				case MEDIUM:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[3]);
 					break;
-				case 4:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV5); //sand
+				case HARD:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[4]);
+					break;
+				case EXIT:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[5]);
+					break;
+				case SOUND:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[6]);
+					break;
+				case MUSIC:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[7]);
 					break;
 				}
 
@@ -822,98 +977,97 @@ void CrateApp::CreateMenu()
 {
 	// LOGO
 	Cube * logoButton = new Cube; //creates new block
-	logoButton->pos = XMVectorSet(5, 13, 5, 1); //set the position in world space for the cube
-	XMMATRIX logoBoxScale = XMMatrixScaling(15.0f, 2.0f, 1.0f); //set the scale of the button
+	logoButton->pos = XMVectorSet(0, 6, 5, 1); //set the position in world space for the cube
+	XMMATRIX logoBoxScale = XMMatrixScaling(20.0f, 2.0f, 1.0f); //set the scale of the button
 	XMStoreFloat4x4(&logoButton->localWorld, XMMatrixMultiply(logoBoxScale, XMMatrixTranslationFromVector(logoButton->pos)));
 	XMStoreFloat3(&logoButton->mMeshBox.Center, logoButton->pos); //sets the center of the mesh box for click detection
-	XMVECTOR logoHalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
+	XMVECTOR logoHalfSize = XMVectorSet(10.0f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
 	XMStoreFloat3(&logoButton->mMeshBox.Extents, logoHalfSize);
-	logoButton->texture = 0; //sets the texture of button; 
+	logoButton->texture = LOGO; //sets the texture of button; 
 	logoButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
 	CrateApp::cubes.push_back(logoButton); //adds the play button to the array of cubes to draw
 
 	//PLAY BUTTON
 	Cube * playButton = new Cube; //creates new block
-
-	playButton->pos = XMVectorSet(5, 4, 5, 1); //set the position in world space for the cube
-	XMMATRIX boxScale = XMMatrixScaling(10.0f, 1.0f, 1.0f); //set the scale of the button
+	playButton->pos = XMVectorSet(0, -1, 5, 1); //set the position in world space for the cube
+	XMMATRIX boxScale = XMMatrixScaling(10.0f, 2.0f, 1.0f); //set the scale of the button
 	XMStoreFloat4x4(&playButton->localWorld, XMMatrixMultiply(boxScale, XMMatrixTranslationFromVector(playButton->pos)));
 	XMStoreFloat3(&playButton->mMeshBox.Center, playButton->pos); //sets the center of the mesh box for click detection
-	XMVECTOR halfSize = XMVectorSet(2.5f, 0.5f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
+	XMVECTOR halfSize = XMVectorSet(2.5f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
 	XMStoreFloat3(&playButton->mMeshBox.Extents, halfSize);
-	playButton->texture = 0; //sets the texture of button; 
+	playButton->texture = PLAY; //sets the texture of button; 
 	playButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
 	CrateApp::cubes.push_back(playButton); //adds the play button to the array of cubes to draw
 
 	// EASY BUTTON
 	Cube * easyButton = new Cube;
-	easyButton->pos = XMVectorSet(-5, 8, 5, 1);
-	XMMATRIX eboxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
+	easyButton->pos = XMVectorSet(-7, 3, 5, 1);
+	XMMATRIX eboxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&easyButton->localWorld, XMMatrixMultiply(eboxScale, XMMatrixTranslationFromVector(easyButton->pos)));
 	XMStoreFloat3(&easyButton->mMeshBox.Center, easyButton->pos);
 	XMVECTOR ehalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&easyButton->mMeshBox.Extents, ehalfSize);
-	easyButton->texture = 0;
+	easyButton->texture = EASY;
 	easyButton->isMenu = true;
 	CrateApp::cubes.push_back(easyButton);
 
 	//MEDIUM BUTTON
 	Cube * midButton = new Cube;
-	midButton->pos = XMVectorSet(5, 8, 5, 1);
-	XMMATRIX midboxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
+	midButton->pos = XMVectorSet(0, 3, 5, 1);
+	XMMATRIX midboxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&midButton->localWorld, XMMatrixMultiply(midboxScale, XMMatrixTranslationFromVector(midButton->pos)));
 	XMStoreFloat3(&midButton->mMeshBox.Center, midButton->pos);
 	XMVECTOR midHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&midButton->mMeshBox.Extents, midHalfSize);
-	midButton->texture = 0;
+	midButton->texture = MEDIUM;
 	midButton->isMenu = true;
 	CrateApp::cubes.push_back(midButton);
 
 	//HARD BUTTON
 	Cube * hardButton = new Cube;
-	hardButton->pos = XMVectorSet(15, 8, 5, 1);
-	XMMATRIX hBoxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
+	hardButton->pos = XMVectorSet(7, 3, 5, 1);
+	XMMATRIX hBoxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&hardButton->localWorld, XMMatrixMultiply(hBoxScale, XMMatrixTranslationFromVector(hardButton->pos)));
 	XMStoreFloat3(&hardButton->mMeshBox.Center, hardButton->pos);
 	XMVECTOR hardHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&hardButton->mMeshBox.Extents, hardHalfSize);
-	hardButton->texture = 0;
+	hardButton->texture = HARD;
 	hardButton->isMenu = true;
 	CrateApp::cubes.push_back(hardButton);
 
 	//EXIT BUTTON
 	Cube * exitButton = new Cube;
-	exitButton->pos = XMVectorSet(5, 0, 5, 1);
-	XMMATRIX exBoxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
+	exitButton->pos = XMVectorSet(9, -7, 5, 1);
+	XMMATRIX exBoxScale = XMMatrixScaling(2.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&exitButton->localWorld, XMMatrixMultiply(exBoxScale, XMMatrixTranslationFromVector(exitButton->pos)));
 	XMStoreFloat3(&exitButton->mMeshBox.Center, exitButton->pos);
 	XMVECTOR exitHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&exitButton->mMeshBox.Extents, exitHalfSize);
-	exitButton->texture = 0;
+	exitButton->texture = EXIT;
 	exitButton->isMenu = true;
 	CrateApp::cubes.push_back(exitButton);
 
 	//SOUND TOGGLE
 	Cube * soundButton = new Cube;
-	soundButton->pos = XMVectorSet(-5, -1, 5, 1);
-	XMMATRIX sBoxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
+	soundButton->pos = XMVectorSet(-8, -5, 5, 1);
+	XMMATRIX sBoxScale = XMMatrixScaling(4.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&soundButton->localWorld, XMMatrixMultiply(sBoxScale, XMMatrixTranslationFromVector(soundButton->pos)));
 	XMStoreFloat3(&soundButton->mMeshBox.Center, soundButton->pos);
 	XMVECTOR sHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&soundButton->mMeshBox.Extents, sHalfSize);
-	soundButton->texture = 0;
+	soundButton->texture = SOUND;
 	soundButton->isMenu = true;
 	CrateApp::cubes.push_back(soundButton);
 
 	//MUSIC TOGGLE
 	Cube * musicButton = new Cube;
-	musicButton->pos = XMVectorSet(-5, -3, 5, 1);
-	XMMATRIX musicBoxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
+	musicButton->pos = XMVectorSet(-8, -7, 5, 1);
+	XMMATRIX musicBoxScale = XMMatrixScaling(4.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&musicButton->localWorld, XMMatrixMultiply(musicBoxScale, XMMatrixTranslationFromVector(musicButton->pos)));
 	XMStoreFloat3(&musicButton->mMeshBox.Center, musicButton->pos);
 	XMVECTOR musicHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&musicButton->mMeshBox.Extents, musicHalfSize);
-	musicButton->texture = 0;
+	musicButton->texture = MUSIC;
 	musicButton->isMenu = true;
 	CrateApp::cubes.push_back(musicButton);
 }
@@ -922,4 +1076,6 @@ void CrateApp::CleanLevel()
 {
 	cubes.clear();
 }
+
+
  
