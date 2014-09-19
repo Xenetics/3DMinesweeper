@@ -1,5 +1,5 @@
 //***************************************************************************************
-// 
+// TODO SHAD: add new menu button texture images in the initTextures function.
 //
 //
 // 
@@ -75,7 +75,7 @@ private:
 	ID3D11ShaderResourceView* mDiffuseMapSRV4;
 	ID3D11ShaderResourceView* mDiffuseMapSRV5;
 	ID3D11ShaderResourceView* mDiffuseMapSRVMenuButtons[8];
-	enum menuButtons {LOGO,PLAY,EASY,MEDIUM,HARD,EXIT,SOUND,MUSIC};
+	enum menuButtons {LOGOb,PLAYb,EASYb,MEDIUMb,HARDb,EXITb,SOUNDb,MUSICb};
 	menuButtons button;
 
 	LPCTSTR num;
@@ -623,7 +623,7 @@ void CrateApp::DrawScene()
 				}
 			}
 		}
-		else
+		else //IF MENU
 		{
 			for (int i = 0; i < cubes.size(); i++)
 			{
@@ -641,28 +641,28 @@ void CrateApp::DrawScene()
 				//Effects::BasicFX->SetDiffuseMap2(mDiffuseMapSRV2);
 				switch (cubes[i]->texture) //show texture of cube
 				{
-				case LOGO:
+				case LOGOb:
 					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[0]);
 					break;
-				case PLAY:
+				case PLAYb:
 					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[1]);
 					break;
-				case EASY:
+				case EASYb:
 					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[2]);
 					break;
-				case MEDIUM:
+				case MEDIUMb:
 					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[3]);
 					break;
-				case HARD:
+				case HARDb:
 					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[4]);
 					break;
-				case EXIT:
+				case EXITb:
 					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[5]);
 					break;
-				case SOUND:
+				case SOUNDb:
 					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[6]);
 					break;
-				case MUSIC:
+				case MUSICb:
 					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[7]);
 					break;
 				}
@@ -937,9 +937,55 @@ void CrateApp::Pick(int sx, int sy)
 			{
 				if (IsMenu)
 				{
-					CleanLevel();
-					MakeLevel(3, 3, 3);
-					menu = false;
+					switch (cubes[j]->texture)
+					{
+					case LOGOb:
+						
+						break;
+					case PLAYb:
+						switch (diffState)
+						{
+						case EASY:
+							CleanLevel();
+							MakeLevel(3, 3, 3);
+							menu = false;
+							break;
+						case MEDIUM:
+							CleanLevel();
+							MakeLevel(4, 4, 4);
+							menu = false;
+							break;
+						case HARD:
+							CleanLevel();
+							MakeLevel(5, 5, 5);
+							menu = false;
+							break;
+						case NONE:
+							MessageBox(0, L"Please Choose Your Difficulty and Try Again", L"Error", MB_OK);
+							break;
+						}
+						
+						break;
+					case EASYb:
+						diffState = EASY;
+						break;
+					case MEDIUMb:
+						diffState = MEDIUM;
+						break;
+					case HARDb:
+						diffState = HARD;
+						break;
+					case EXITb:
+						
+						break;
+					case SOUNDb:
+						
+						break;
+					case MUSICb:
+						
+						break;
+					}
+					
 				}
 				else
 				{
@@ -987,7 +1033,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&logoButton->mMeshBox.Center, logoButton->pos); //sets the center of the mesh box for click detection
 	XMVECTOR logoHalfSize = XMVectorSet(10.0f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
 	XMStoreFloat3(&logoButton->mMeshBox.Extents, logoHalfSize);
-	logoButton->texture = LOGO; //sets the texture of button; 
+	logoButton->texture = LOGOb; //sets the texture of button; 
 	logoButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
 	CrateApp::cubes.push_back(logoButton); //adds the play button to the array of cubes to draw
 
@@ -999,7 +1045,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&playButton->mMeshBox.Center, playButton->pos); //sets the center of the mesh box for click detection
 	XMVECTOR halfSize = XMVectorSet(2.5f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
 	XMStoreFloat3(&playButton->mMeshBox.Extents, halfSize);
-	playButton->texture = PLAY; //sets the texture of button; 
+	playButton->texture = PLAYb; //sets the texture of button; 
 	playButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
 	CrateApp::cubes.push_back(playButton); //adds the play button to the array of cubes to draw
 
@@ -1011,7 +1057,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&easyButton->mMeshBox.Center, easyButton->pos);
 	XMVECTOR ehalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&easyButton->mMeshBox.Extents, ehalfSize);
-	easyButton->texture = EASY;
+	easyButton->texture = EASYb;
 	easyButton->isMenu = true;
 	CrateApp::cubes.push_back(easyButton);
 
@@ -1023,7 +1069,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&midButton->mMeshBox.Center, midButton->pos);
 	XMVECTOR midHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&midButton->mMeshBox.Extents, midHalfSize);
-	midButton->texture = MEDIUM;
+	midButton->texture = MEDIUMb;
 	midButton->isMenu = true;
 	CrateApp::cubes.push_back(midButton);
 
@@ -1035,7 +1081,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&hardButton->mMeshBox.Center, hardButton->pos);
 	XMVECTOR hardHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&hardButton->mMeshBox.Extents, hardHalfSize);
-	hardButton->texture = HARD;
+	hardButton->texture = HARDb;
 	hardButton->isMenu = true;
 	CrateApp::cubes.push_back(hardButton);
 
@@ -1047,7 +1093,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&exitButton->mMeshBox.Center, exitButton->pos);
 	XMVECTOR exitHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&exitButton->mMeshBox.Extents, exitHalfSize);
-	exitButton->texture = EXIT;
+	exitButton->texture = EXITb;
 	exitButton->isMenu = true;
 	CrateApp::cubes.push_back(exitButton);
 
@@ -1059,7 +1105,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&soundButton->mMeshBox.Center, soundButton->pos);
 	XMVECTOR sHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&soundButton->mMeshBox.Extents, sHalfSize);
-	soundButton->texture = SOUND;
+	soundButton->texture = SOUNDb;
 	soundButton->isMenu = true;
 	CrateApp::cubes.push_back(soundButton);
 
@@ -1071,7 +1117,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&musicButton->mMeshBox.Center, musicButton->pos);
 	XMVECTOR musicHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&musicButton->mMeshBox.Extents, musicHalfSize);
-	musicButton->texture = MUSIC;
+	musicButton->texture = MUSICb;
 	musicButton->isMenu = true;
 	CrateApp::cubes.push_back(musicButton);
 }
