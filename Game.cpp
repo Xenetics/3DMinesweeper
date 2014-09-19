@@ -254,11 +254,7 @@ CrateApp::~CrateApp()
 	InputLayouts::DestroyAll();
 
 	//Clean up FMOD
-	result = sound1->release();
-	ERRCHECK(result);
-	result = sound2->release();
-	ERRCHECK(result);
-	result = sound3->release();
+	result = music->release();
 	ERRCHECK(result);
 	result = system->close();
 	ERRCHECK(result);
