@@ -126,6 +126,8 @@
     <Library Include="Effects11d.lib">
       <Filter>Resource Files</Filter>
     </Library>
-    <Library Include="fmodex_vc.lib" />
+    <Library Include="fmodex_vc.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
   </ItemGroup>
 </Project>

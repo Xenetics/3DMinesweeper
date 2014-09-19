@@ -388,6 +388,7 @@ bool CrateApp::Init()
 	Effects::InitAll(md3dDevice);
 	InputLayouts::InitAll(md3dDevice);
 
+	InitFMOD();
 	InitTextures();
 
 	std::wstring filename = L"Textures/FireAnim/Fire";
