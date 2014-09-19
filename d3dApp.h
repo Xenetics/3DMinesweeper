@@ -40,6 +40,8 @@ public:
 	virtual void OnMouseDown(WPARAM btnState, int x, int y){ }
 	virtual void OnMouseUp(WPARAM btnState, int x, int y)  { }
 	virtual void OnMouseMove(WPARAM btnState, int x, int y){ }
+	//new function for mouse wheel
+	virtual void OnMouseWheelMove(WPARAM btnState, int fwKeys, int zDelta, int x, int y){ }
 
 protected:
 	bool InitMainWindow();

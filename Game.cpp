@@ -52,6 +52,7 @@ public:
 	void OnMouseDown(WPARAM btnState, int x, int y);
 	void OnMouseUp(WPARAM btnState, int x, int y);
 	void OnMouseMove(WPARAM btnState, int x, int y);
+	void OnMouseWheelMove(WPARAM btnState,int fwKeys, int zDelta, int x, int y);
 	void MakeLevel(UINT width, UINT length, UINT height);
 	void Pick(int sx, int sy);
 
@@ -287,29 +288,38 @@ void CrateApp::UpdateScene(float dt)
 	//
 	if (!menu) //disables camera control when viewing the menu
 	{
-		if (GetAsyncKeyState('W') & 0x8000)
+		if (GetAsyncKeyState('W') & 0x8000 || GetAsyncKeyState(VK_UP) & 0x8000)
 		{
 			//mCam.Walk(10.0f*dt);
 			mCam.OrbitVertical(1 * dt);
 		}
-		if (GetAsyncKeyState('S') & 0x8000)
+		if (GetAsyncKeyState('S') & 0x8000 || GetAsyncKeyState(VK_DOWN) & 0x8000)
 		{
 			//mCam.Walk(-10.0f*dt);
 			mCam.OrbitVertical(-1 * dt);
 		}
-		if (GetAsyncKeyState('A') & 0x8000)
+		if (GetAsyncKeyState('A') & 0x8000 || GetAsyncKeyState(VK_LEFT) & 0x8000)
 		{
 			//mCam.Strafe(-10.0f*dt);
 			mCam.OrbitHorizontal(-1 * dt);
 		}
-		if (GetAsyncKeyState('D') & 0x8000)
+		if (GetAsyncKeyState('D') & 0x8000 || GetAsyncKeyState(VK_RIGHT) & 0x8000)
 		{
 			//mCam.Strafe(10.0f*dt);
 			mCam.OrbitHorizontal(1 * dt);
 		}
+
+		if (GetAsyncKeyState('Q') & 0x8000)
+		{
+			mCam.Walk(10.0f*dt);
+		}
+		if (GetAsyncKeyState('E') & 0x8000)
+		{
+			mCam.Walk(-10.0f*dt);
+		}
 	}
 
-	if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
+	if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) //exits the game
 	{
 		PostQuitMessage(0);
 	}
@@ -510,33 +520,7 @@ void CrateApp::OnMouseUp(WPARAM btnState, int x, int y)
 
 void CrateApp::OnMouseMove(WPARAM btnState, int x, int y)
 {
-	/*if( (btnState & MK_LBUTTON) != 0 )
-	{
-		// Make each pixel correspond to a quarter of a degree.
-		float dx = XMConvertToRadians(0.25f*static_cast<float>(x - mLastMousePos.x));
-		float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
-
-		// Update angles based on input to orbit camera around box.
-		mTheta += dx;
-		mPhi   += dy;
-
-		// Restrict the angle mPhi.
-		mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi-0.1f);
-	}*/
-	/*else if( (btnState & MK_RBUTTON) != 0 )
-	{
-		// Make each pixel correspond to 0.01 unit in the scene.
-		float dx = 0.01f*static_cast<float>(x - mLastMousePos.x);
-		float dy = 0.01f*static_cast<float>(y - mLastMousePos.y);
-
-		// Update the camera radius based on input.
-		mRadius += dx - dy;
-
-		// Restrict the radius.
-		mRadius = MathHelper::Clamp(mRadius, 1.0f, 15.0f);
-	}*/
-
-	if ((btnState & MK_RBUTTON) != 0)
+	/*if ((btnState & MK_RBUTTON) != 0 && !menu)
 	{
 		// Make each pixel correspond to a quarter of a degree.
 		float dx = XMConvertToRadians(0.25f*static_cast<float>(x - mLastMousePos.x));
@@ -547,7 +531,26 @@ void CrateApp::OnMouseMove(WPARAM btnState, int x, int y)
 	}
 
 	mLastMousePos.x = x;
-	mLastMousePos.y = y;
+	mLastMousePos.y = y;*/
+}
+
+void CrateApp::OnMouseWheelMove(WPARAM btnState,int fwKeys, int zDelta, int x, int y)
+{
+	if (zDelta > 1) //mouse wheel up
+	{
+		if (mCam.GetPosition().z < -3)
+		{
+			mCam.Walk(1.0f);
+		}
+	}
+	else if (zDelta < 1) //mouse wheel down
+	{
+		if (mCam.GetPosition().z > -30)
+		{
+			mCam.Walk(-1.0f);
+		}
+		
+	}
 }
 
 void CrateApp::BuildGeometryBuffers()
