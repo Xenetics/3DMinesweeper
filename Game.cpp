@@ -70,9 +70,11 @@ private:
 	ID3D11ShaderResourceView* mDiffuseMapSRV5;
 	LPCTSTR num;
 
-
+	// Lighting variables
 	DirectionalLight mDirLights[2];
 	PointLight mPointLights[2];
+
+	// Material variables
 	Material mBoxMat;
 
 	XMFLOAT4X4 mTexTransform;
@@ -94,6 +96,12 @@ private:
 	POINT mLastMousePos;
 	int timer = 0;
 	int whichIMG = 0;
+
+	// enum for difficulties
+	enum difficulty
+	{
+		easy, medium, hard
+	};
 public:
 	// Define transformations from local spaces to world space.
 	XMFLOAT4X4 mMeshWorld;
