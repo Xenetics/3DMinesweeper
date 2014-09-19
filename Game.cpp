@@ -107,19 +107,11 @@ private:
 	int timer = 0;
 	int whichIMG = 0;
 
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/master
 	// enum for difficulties
 	enum difficulty
 	{
 		easy, medium, hard
 	};
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/master
 	//FMOD stuff
 	FMOD::System *system;
 	FMOD_RESULT result;
@@ -128,10 +120,6 @@ private:
 	int               key;
 	unsigned int      version;
 
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/master
 public:
 	// Define transformations from local spaces to world space.
 	XMFLOAT4X4 mMeshWorld;
@@ -263,11 +251,7 @@ CrateApp::~CrateApp()
 	InputLayouts::DestroyAll();
 
 	//Clean up FMOD
-	result = sound1->release();
-	ERRCHECK(result);
-	result = sound2->release();
-	ERRCHECK(result);
-	result = sound3->release();
+	result = music->release();
 	ERRCHECK(result);
 	result = system->close();
 	ERRCHECK(result);
