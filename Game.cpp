@@ -1,11 +1,10 @@
 //***************************************************************************************
-// CrateDemo.cpp by Frank Luna (C) 2011 All Rights Reserved.
+// 
 //
-// Demonstrates texturing a box.
 //
-// Controls:
-//		Hold the left mouse button down and move the mouse to rotate.
-//      Hold the right mouse button down to zoom in and out.
+// 
+//		
+//      
 //
 //***************************************************************************************
 
@@ -76,7 +75,8 @@ private:
 	LPCTSTR num;
 
 
-	DirectionalLight mDirLights[3];
+	DirectionalLight mDirLights[2];
+	PointLight mPointLights[2];
 	Material mBoxMat;
 
 	XMFLOAT4X4 mTexTransform;
@@ -171,6 +171,13 @@ mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), m
 	mDirLights[1].Diffuse  = XMFLOAT4(1.4f, 1.4f, 1.4f, 1.0f);
 	mDirLights[1].Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 16.0f);
 	mDirLights[1].Direction = XMFLOAT3(-0.707f, 0.0f, 0.707f);
+
+	mPointLights[0].Ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	mPointLights[0].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	mPointLights[0].Specular = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	mPointLights[0].Att = XMFLOAT3(0.4f, 0.2f, 0.0f);
+	mPointLights[0].Position = XMFLOAT3(0.0f, 1.0f, 15.0f);
+	mPointLights[0].Range = 20.0f;
 
 	mBoxMat.Ambient  = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	mBoxMat.Diffuse  = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -370,7 +377,32 @@ void CrateApp::DrawScene()
 	XMMATRIX viewProj = mCam.ViewProj();
 
 	// Set per frame constants.
-	Effects::BasicFX->SetDirLights(mDirLights);
+	if (!menu)
+	{
+		mDirLights[0].Ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+		mDirLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+		mDirLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
+		mDirLights[0].Direction = XMFLOAT3(0.707f, -0.707f, 0.0f);
+
+		mDirLights[1].Ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+		mDirLights[1].Diffuse = XMFLOAT4(1.4f, 1.4f, 1.4f, 1.0f);
+		mDirLights[1].Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 16.0f);
+		mDirLights[1].Direction = XMFLOAT3(-0.707f, 0.0f, 0.707f);
+		Effects::BasicFX->SetDirLights(mDirLights);
+	}
+	else
+	{
+		mDirLights[0].Ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+		mDirLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+		mDirLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
+		mDirLights[0].Direction = XMFLOAT3(0.0f, 0.0f, 0.7f);
+
+		mDirLights[1].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+		mDirLights[1].Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+		mDirLights[1].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 16.0f);
+		mDirLights[1].Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
+		Effects::BasicFX->SetDirLights(mDirLights);
+	}
 	//Effects::BasicFX->SetEyePosW(mEyePosW);
 	Effects::BasicFX->SetEyePosW(mCam.GetPosition());
  
@@ -812,11 +844,11 @@ void CrateApp::CreateMenu()
 {
 	// LOGO
 	Cube * logoButton = new Cube; //creates new block
-	logoButton->pos = XMVectorSet(5, 13, 5, 1); //set the position in world space for the cube
-	XMMATRIX logoBoxScale = XMMatrixScaling(15.0f, 2.0f, 1.0f); //set the scale of the button
+	logoButton->pos = XMVectorSet(0, 6, 5, 1); //set the position in world space for the cube
+	XMMATRIX logoBoxScale = XMMatrixScaling(20.0f, 2.0f, 1.0f); //set the scale of the button
 	XMStoreFloat4x4(&logoButton->localWorld, XMMatrixMultiply(logoBoxScale, XMMatrixTranslationFromVector(logoButton->pos)));
 	XMStoreFloat3(&logoButton->mMeshBox.Center, logoButton->pos); //sets the center of the mesh box for click detection
-	XMVECTOR logoHalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
+	XMVECTOR logoHalfSize = XMVectorSet(10.0f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
 	XMStoreFloat3(&logoButton->mMeshBox.Extents, logoHalfSize);
 	logoButton->texture = LOGO; //sets the texture of button; 
 	logoButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
@@ -824,11 +856,11 @@ void CrateApp::CreateMenu()
 
 	//PLAY BUTTON
 	Cube * playButton = new Cube; //creates new block
-	playButton->pos = XMVectorSet(5, 4, 5, 1); //set the position in world space for the cube
-	XMMATRIX boxScale = XMMatrixScaling(10.0f, 1.0f, 1.0f); //set the scale of the button
+	playButton->pos = XMVectorSet(0, -1, 5, 1); //set the position in world space for the cube
+	XMMATRIX boxScale = XMMatrixScaling(10.0f, 2.0f, 1.0f); //set the scale of the button
 	XMStoreFloat4x4(&playButton->localWorld, XMMatrixMultiply(boxScale, XMMatrixTranslationFromVector(playButton->pos)));
 	XMStoreFloat3(&playButton->mMeshBox.Center, playButton->pos); //sets the center of the mesh box for click detection
-	XMVECTOR halfSize = XMVectorSet(2.5f, 0.5f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
+	XMVECTOR halfSize = XMVectorSet(2.5f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
 	XMStoreFloat3(&playButton->mMeshBox.Extents, halfSize);
 	playButton->texture = PLAY; //sets the texture of button; 
 	playButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
@@ -836,8 +868,8 @@ void CrateApp::CreateMenu()
 
 	// EASY BUTTON
 	Cube * easyButton = new Cube;
-	easyButton->pos = XMVectorSet(-5, 8, 5, 1);
-	XMMATRIX eboxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
+	easyButton->pos = XMVectorSet(-7, 3, 5, 1);
+	XMMATRIX eboxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&easyButton->localWorld, XMMatrixMultiply(eboxScale, XMMatrixTranslationFromVector(easyButton->pos)));
 	XMStoreFloat3(&easyButton->mMeshBox.Center, easyButton->pos);
 	XMVECTOR ehalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
@@ -848,8 +880,8 @@ void CrateApp::CreateMenu()
 
 	//MEDIUM BUTTON
 	Cube * midButton = new Cube;
-	midButton->pos = XMVectorSet(5, 8, 5, 1);
-	XMMATRIX midboxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
+	midButton->pos = XMVectorSet(0, 3, 5, 1);
+	XMMATRIX midboxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&midButton->localWorld, XMMatrixMultiply(midboxScale, XMMatrixTranslationFromVector(midButton->pos)));
 	XMStoreFloat3(&midButton->mMeshBox.Center, midButton->pos);
 	XMVECTOR midHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
@@ -860,8 +892,8 @@ void CrateApp::CreateMenu()
 
 	//HARD BUTTON
 	Cube * hardButton = new Cube;
-	hardButton->pos = XMVectorSet(15, 8, 5, 1);
-	XMMATRIX hBoxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
+	hardButton->pos = XMVectorSet(7, 3, 5, 1);
+	XMMATRIX hBoxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&hardButton->localWorld, XMMatrixMultiply(hBoxScale, XMMatrixTranslationFromVector(hardButton->pos)));
 	XMStoreFloat3(&hardButton->mMeshBox.Center, hardButton->pos);
 	XMVECTOR hardHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
@@ -872,8 +904,8 @@ void CrateApp::CreateMenu()
 
 	//EXIT BUTTON
 	Cube * exitButton = new Cube;
-	exitButton->pos = XMVectorSet(5, 0, 5, 1);
-	XMMATRIX exBoxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
+	exitButton->pos = XMVectorSet(9, -7, 5, 1);
+	XMMATRIX exBoxScale = XMMatrixScaling(2.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&exitButton->localWorld, XMMatrixMultiply(exBoxScale, XMMatrixTranslationFromVector(exitButton->pos)));
 	XMStoreFloat3(&exitButton->mMeshBox.Center, exitButton->pos);
 	XMVECTOR exitHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
@@ -884,8 +916,8 @@ void CrateApp::CreateMenu()
 
 	//SOUND TOGGLE
 	Cube * soundButton = new Cube;
-	soundButton->pos = XMVectorSet(-5, -1, 5, 1);
-	XMMATRIX sBoxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
+	soundButton->pos = XMVectorSet(-8, -5, 5, 1);
+	XMMATRIX sBoxScale = XMMatrixScaling(4.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&soundButton->localWorld, XMMatrixMultiply(sBoxScale, XMMatrixTranslationFromVector(soundButton->pos)));
 	XMStoreFloat3(&soundButton->mMeshBox.Center, soundButton->pos);
 	XMVECTOR sHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
@@ -896,8 +928,8 @@ void CrateApp::CreateMenu()
 
 	//MUSIC TOGGLE
 	Cube * musicButton = new Cube;
-	musicButton->pos = XMVectorSet(-5, -3, 5, 1);
-	XMMATRIX musicBoxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
+	musicButton->pos = XMVectorSet(-8, -7, 5, 1);
+	XMMATRIX musicBoxScale = XMMatrixScaling(4.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&musicButton->localWorld, XMMatrixMultiply(musicBoxScale, XMMatrixTranslationFromVector(musicButton->pos)));
 	XMStoreFloat3(&musicButton->mMeshBox.Center, musicButton->pos);
 	XMVECTOR musicHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
