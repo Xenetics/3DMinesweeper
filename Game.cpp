@@ -780,11 +780,11 @@ void CrateApp::CreateMenu()
 {
 	// LOGO
 	Cube * logoButton = new Cube; //creates new block
-	logoButton->pos = XMVectorSet(5, 11, 5, 1); //set the position in world space for the cube
-	XMMATRIX logoBoxScale = XMMatrixScaling(5.0f, 1.0f, 1.0f); //set the scale of the button
+	logoButton->pos = XMVectorSet(5, 13, 5, 1); //set the position in world space for the cube
+	XMMATRIX logoBoxScale = XMMatrixScaling(15.0f, 2.0f, 1.0f); //set the scale of the button
 	XMStoreFloat4x4(&mBoxWorld, XMMatrixMultiply(logoBoxScale, XMMatrixTranslationFromVector(logoButton->pos)));
 	XMStoreFloat3(&logoButton->mMeshBox.Center, logoButton->pos); //sets the center of the mesh box for click detection
-	XMVECTOR logoHalfSize = XMVectorSet(2.5f, 0.5f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
+	XMVECTOR logoHalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
 	XMStoreFloat3(&logoButton->mMeshBox.Extents, logoHalfSize);
 	logoButton->texture = 0; //sets the texture of button; 
 	logoButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
@@ -793,8 +793,8 @@ void CrateApp::CreateMenu()
 	//PLAY BUTTON
 	Cube * playButton = new Cube; //creates new block
 
-	playButton->pos = XMVectorSet(0, 3, 5, 1); //set the position in world space for the cube
-	XMMATRIX boxScale = XMMatrixScaling(5.0f, 1.0f, 1.0f); //set the scale of the button
+	playButton->pos = XMVectorSet(5, 4, 5, 1); //set the position in world space for the cube
+	XMMATRIX boxScale = XMMatrixScaling(10.0f, 1.0f, 1.0f); //set the scale of the button
 	XMStoreFloat4x4(&mBoxWorld, XMMatrixMultiply(boxScale, XMMatrixTranslationFromVector(playButton->pos)));
 	XMStoreFloat3(&playButton->mMeshBox.Center, playButton->pos); //sets the center of the mesh box for click detection
 	XMVECTOR halfSize = XMVectorSet(2.5f, 0.5f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
@@ -805,7 +805,7 @@ void CrateApp::CreateMenu()
 
 	// EASY BUTTON
 	Cube * easyButton = new Cube;
-	easyButton->pos = XMVectorSet(-3, 5, 5, 1);
+	easyButton->pos = XMVectorSet(-5, 8, 5, 1);
 	XMMATRIX eboxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
 	XMStoreFloat4x4(&mBoxWorld, XMMatrixMultiply(eboxScale, XMMatrixTranslationFromVector(easyButton->pos)));
 	XMStoreFloat3(&easyButton->mMeshBox.Center, easyButton->pos);
@@ -817,7 +817,7 @@ void CrateApp::CreateMenu()
 
 	//MEDIUM BUTTON
 	Cube * midButton = new Cube;
-	midButton->pos = XMVectorSet(0, 5, 5, 1);
+	midButton->pos = XMVectorSet(5, 8, 5, 1);
 	XMMATRIX midboxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
 	XMStoreFloat4x4(&mBoxWorld, XMMatrixMultiply(midboxScale, XMMatrixTranslationFromVector(midButton->pos)));
 	XMStoreFloat3(&midButton->mMeshBox.Center, midButton->pos);
@@ -829,7 +829,7 @@ void CrateApp::CreateMenu()
 
 	//HARD BUTTON
 	Cube * hardButton = new Cube;
-	hardButton->pos = XMVectorSet(3, 5, 5, 1);
+	hardButton->pos = XMVectorSet(15, 8, 5, 1);
 	XMMATRIX hBoxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
 	XMStoreFloat4x4(&mBoxWorld, XMMatrixMultiply(hBoxScale, XMMatrixTranslationFromVector(hardButton->pos)));
 	XMStoreFloat3(&hardButton->mMeshBox.Center, hardButton->pos);
@@ -841,7 +841,7 @@ void CrateApp::CreateMenu()
 
 	//EXIT BUTTON
 	Cube * exitButton = new Cube;
-	exitButton->pos = XMVectorSet(0, 1, 5, 1);
+	exitButton->pos = XMVectorSet(5, 0, 5, 1);
 	XMMATRIX exBoxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
 	XMStoreFloat4x4(&mBoxWorld, XMMatrixMultiply(exBoxScale, XMMatrixTranslationFromVector(exitButton->pos)));
 	XMStoreFloat3(&exitButton->mMeshBox.Center, exitButton->pos);
@@ -853,7 +853,7 @@ void CrateApp::CreateMenu()
 
 	//SOUND TOGGLE
 	Cube * soundButton = new Cube;
-	soundButton->pos = XMVectorSet(-5, -5, 5, 1);
+	soundButton->pos = XMVectorSet(-5, -1, 5, 1);
 	XMMATRIX sBoxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
 	XMStoreFloat4x4(&mBoxWorld, XMMatrixMultiply(sBoxScale, XMMatrixTranslationFromVector(soundButton->pos)));
 	XMStoreFloat3(&soundButton->mMeshBox.Center, soundButton->pos);
@@ -865,7 +865,7 @@ void CrateApp::CreateMenu()
 
 	//MUSIC TOGGLE
 	Cube * musicButton = new Cube;
-	musicButton->pos = XMVectorSet(-5, -3, 5, 1);
+	musicButton->pos = XMVectorSet(-5, -4, 5, 1);
 	XMMATRIX musicBoxScale = XMMatrixScaling(5.0f, 2.0f, 1.0f);
 	XMStoreFloat4x4(&mBoxWorld, XMMatrixMultiply(musicBoxScale, XMMatrixTranslationFromVector(musicButton->pos)));
 	XMStoreFloat3(&musicButton->mMeshBox.Center, musicButton->pos);
