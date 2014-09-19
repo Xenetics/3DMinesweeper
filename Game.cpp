@@ -538,22 +538,19 @@ void CrateApp::OnMouseMove(WPARAM btnState, int x, int y)
 
 void CrateApp::OnMouseWheelMove(WPARAM btnState,int fwKeys, int zDelta, int x, int y)
 {
-	if (zDelta > 1) //mouse wheel up
+	if (!menu)
 	{
-		if (mCam.GetPosition().z < -3)
+		XMVECTOR distance = XMVector3Length(mCam.GetPositionXM() - XMVectorZero());
+		float length = XMVectorGetByIndex(distance, 1);
+
+		if (zDelta > 1 && length > 5) //mouse wheel up
 		{
-			//XMVECTOR vec0 = XMVectorZero();
-			//XMVECTOR camPos = mCam.GetPositionXM();
 			mCam.Walk(1.0f);
 		}
-	}
-	else if (zDelta < 1) //mouse wheel down
-	{
-		if (mCam.GetPosition().z > -30)
+		else if (zDelta < 1 && length < 30) //mouse wheel down
 		{
 			mCam.Walk(-1.0f);
 		}
-		
 	}
 }
 
