@@ -107,13 +107,11 @@ private:
 	int timer = 0;
 	int whichIMG = 0;
 
-<<<<<<< HEAD
 	// enum for difficulties
 	enum difficulty
 	{
 		easy, medium, hard
 	};
-=======
 	//FMOD stuff
 	FMOD::System *system;
 	FMOD_RESULT result;
@@ -122,7 +120,6 @@ private:
 	int               key;
 	unsigned int      version;
 
->>>>>>> origin/master
 public:
 	// Define transformations from local spaces to world space.
 	XMFLOAT4X4 mMeshWorld;
