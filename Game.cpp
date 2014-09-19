@@ -1108,21 +1108,6 @@ void CrateApp::CleanLevel()
 
 void CrateApp::MenuLighting()
 {
-	mDirLights[0].Ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
-	mDirLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	mDirLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
-	mDirLights[0].Direction = XMFLOAT3(0.707f, -0.707f, 0.0f);
-
-	mDirLights[1].Ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-	mDirLights[1].Diffuse = XMFLOAT4(1.4f, 1.4f, 1.4f, 1.0f);
-	mDirLights[1].Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 16.0f);
-	mDirLights[1].Direction = XMFLOAT3(-0.707f, 0.0f, 0.707f);
-
-	Effects::BasicFX->SetDirLights(mDirLights);
-}
-
-void CrateApp::GameLighting()
-{
 	mDirLights[0].Ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	mDirLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
 	mDirLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
@@ -1139,6 +1124,21 @@ void CrateApp::GameLighting()
 	mPointLights[0].Att = XMFLOAT3(0.4f, 0.2f, 0.0f);
 	mPointLights[0].Position = XMFLOAT3(0.0f, 1.0f, 15.0f);
 	mPointLights[0].Range = 20.0f;
+
+	Effects::BasicFX->SetDirLights(mDirLights);
+}
+
+void CrateApp::GameLighting()
+{
+	mDirLights[0].Ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+	mDirLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+	mDirLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
+	mDirLights[0].Direction = XMFLOAT3(0.707f, -0.707f, 0.0f);
+
+	mDirLights[1].Ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+	mDirLights[1].Diffuse = XMFLOAT4(1.4f, 1.4f, 1.4f, 1.0f);
+	mDirLights[1].Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 16.0f);
+	mDirLights[1].Direction = XMFLOAT3(-0.707f, 0.0f, 0.707f);
 
 	Effects::BasicFX->SetDirLights(mDirLights);
 }
