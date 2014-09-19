@@ -69,6 +69,10 @@ private:
 	ID3D11ShaderResourceView* mDiffuseMapSRV3[120];
 	ID3D11ShaderResourceView* mDiffuseMapSRV4;
 	ID3D11ShaderResourceView* mDiffuseMapSRV5;
+	ID3D11ShaderResourceView* mDiffuseMapSRVMenuButtons[8];
+	enum menuButtons {LOGO,PLAY,EASY,MEDIUM,HARD,EXIT,SOUND,MUSIC};
+	menuButtons button;
+
 	LPCTSTR num;
 
 
@@ -122,6 +126,7 @@ public:
 	void CreateMenu();
 	bool menu = true;
 	void CleanLevel(); //cleans the level data before loading new level
+	void InitTextures();
 };
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
@@ -208,17 +213,21 @@ CrateApp::~CrateApp()
 	InputLayouts::DestroyAll();
 }
 
-bool CrateApp::Init()
+void CrateApp::InitTextures()
 {
-	if(!D3DApp::Init())
-		return false;
+	//Menu Textures
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[0], 0)); //LOGO
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[1], 0)); //PLAY
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[2], 0)); //EASY
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[3], 0)); //MEDIUM
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[4], 0)); //HARD
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[5], 0)); //EXIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[6], 0)); //SOUND
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[7], 0)); //MUSIC
 
-	// Must init Effects first since InputLayouts depend on shader signatures.
-	Effects::InitAll(md3dDevice);
-	InputLayouts::InitAll(md3dDevice);
-
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, 
-		L"Textures/MetalBox.jpg", 0, 0, &mDiffuseMapSRV, 0 ));
+	//Game Textures
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
+		L"Textures/MetalBox.jpg", 0, 0, &mDiffuseMapSRV, 0));
 
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
 		L"Textures/rock.dds", 0, 0, &mDiffuseMapSRV2, 0));
@@ -228,6 +237,18 @@ bool CrateApp::Init()
 
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
 		L"Textures/sand.jpg", 0, 0, &mDiffuseMapSRV5, 0));
+}
+
+bool CrateApp::Init()
+{
+	if(!D3DApp::Init())
+		return false;
+
+	// Must init Effects first since InputLayouts depend on shader signatures.
+	Effects::InitAll(md3dDevice);
+	InputLayouts::InitAll(md3dDevice);
+
+	InitTextures();
 
 	std::wstring filename = L"Textures/FireAnim/Fire";
 	for (int i = 1; i < 121; i++)
@@ -451,20 +472,29 @@ void CrateApp::DrawScene()
 				//Effects::BasicFX->SetDiffuseMap2(mDiffuseMapSRV2);
 				switch (cubes[i]->texture) //show texture of cube
 				{
-				case 0:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV); //grass
+				case LOGO:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[0]);
 					break;
-				case 1:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV2); //stone
+				case PLAY:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[1]);
 					break;
-				case 2:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV3[whichIMG]); //fire
+				case EASY:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[2]);
 					break;
-				case 3:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV4); //diamond
+				case MEDIUM:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[3]);
 					break;
-				case 4:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV5); //sand
+				case HARD:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[4]);
+					break;
+				case EXIT:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[5]);
+					break;
+				case SOUND:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[6]);
+					break;
+				case MUSIC:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[7]);
 					break;
 				}
 
@@ -788,20 +818,19 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&logoButton->mMeshBox.Center, logoButton->pos); //sets the center of the mesh box for click detection
 	XMVECTOR logoHalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
 	XMStoreFloat3(&logoButton->mMeshBox.Extents, logoHalfSize);
-	logoButton->texture = 0; //sets the texture of button; 
+	logoButton->texture = LOGO; //sets the texture of button; 
 	logoButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
 	CrateApp::cubes.push_back(logoButton); //adds the play button to the array of cubes to draw
 
 	//PLAY BUTTON
 	Cube * playButton = new Cube; //creates new block
-
 	playButton->pos = XMVectorSet(5, 4, 5, 1); //set the position in world space for the cube
 	XMMATRIX boxScale = XMMatrixScaling(10.0f, 1.0f, 1.0f); //set the scale of the button
 	XMStoreFloat4x4(&playButton->localWorld, XMMatrixMultiply(boxScale, XMMatrixTranslationFromVector(playButton->pos)));
 	XMStoreFloat3(&playButton->mMeshBox.Center, playButton->pos); //sets the center of the mesh box for click detection
 	XMVECTOR halfSize = XMVectorSet(2.5f, 0.5f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
 	XMStoreFloat3(&playButton->mMeshBox.Extents, halfSize);
-	playButton->texture = 0; //sets the texture of button; 
+	playButton->texture = PLAY; //sets the texture of button; 
 	playButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
 	CrateApp::cubes.push_back(playButton); //adds the play button to the array of cubes to draw
 
@@ -813,7 +842,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&easyButton->mMeshBox.Center, easyButton->pos);
 	XMVECTOR ehalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&easyButton->mMeshBox.Extents, ehalfSize);
-	easyButton->texture = 0;
+	easyButton->texture = EASY;
 	easyButton->isMenu = true;
 	CrateApp::cubes.push_back(easyButton);
 
@@ -825,7 +854,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&midButton->mMeshBox.Center, midButton->pos);
 	XMVECTOR midHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&midButton->mMeshBox.Extents, midHalfSize);
-	midButton->texture = 0;
+	midButton->texture = MEDIUM;
 	midButton->isMenu = true;
 	CrateApp::cubes.push_back(midButton);
 
@@ -837,7 +866,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&hardButton->mMeshBox.Center, hardButton->pos);
 	XMVECTOR hardHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&hardButton->mMeshBox.Extents, hardHalfSize);
-	hardButton->texture = 0;
+	hardButton->texture = HARD;
 	hardButton->isMenu = true;
 	CrateApp::cubes.push_back(hardButton);
 
@@ -849,7 +878,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&exitButton->mMeshBox.Center, exitButton->pos);
 	XMVECTOR exitHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&exitButton->mMeshBox.Extents, exitHalfSize);
-	exitButton->texture = 0;
+	exitButton->texture = EXIT;
 	exitButton->isMenu = true;
 	CrateApp::cubes.push_back(exitButton);
 
@@ -861,7 +890,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&soundButton->mMeshBox.Center, soundButton->pos);
 	XMVECTOR sHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&soundButton->mMeshBox.Extents, sHalfSize);
-	soundButton->texture = 0;
+	soundButton->texture = SOUND;
 	soundButton->isMenu = true;
 	CrateApp::cubes.push_back(soundButton);
 
@@ -873,7 +902,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&musicButton->mMeshBox.Center, musicButton->pos);
 	XMVECTOR musicHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&musicButton->mMeshBox.Extents, musicHalfSize);
-	musicButton->texture = 0;
+	musicButton->texture = MUSIC;
 	musicButton->isMenu = true;
 	CrateApp::cubes.push_back(musicButton);
 }
@@ -882,4 +911,6 @@ void CrateApp::CleanLevel()
 {
 	cubes.clear();
 }
+
+
  
