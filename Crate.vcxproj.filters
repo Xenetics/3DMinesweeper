@@ -120,11 +120,12 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="Effects11d.lib">
-      <Filter>Resource Files</Filter>
-    </Library>
     <Library Include="Effects11.lib">
       <Filter>Resource Files</Filter>
     </Library>
+    <Library Include="Effects11d.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="fmodex_vc.lib" />
   </ItemGroup>
 </Project>

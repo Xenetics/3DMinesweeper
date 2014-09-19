@@ -1,0 +1,9 @@
+To Add Sound To the DirectX Game:
+
+go to www.fmod.org/downloads
+download and install fmod ex programmer's api
+in your project go to properties
+in VC++ directories unde include directories add programfilesx86\FMODsoundsystem\FMOD programmers API windows\api\inc
+in your libraries directories add: programfilesx86\FMODsoundsystem\FMOD programmers API windows\api\lib
+in C++ under the general tab in additional Include Directories add: programfilesx86\FMODSoundSystem\FMOD programmers Api windows\api\inc
+make sure fmodex.dll and fmodex_vc.lib is in the project folder
