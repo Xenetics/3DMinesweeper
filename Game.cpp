@@ -107,8 +107,6 @@ private:
 	int timer = 0;
 	int whichIMG = 0;
 
-
-
 	// enum for difficulties
 	enum difficulty
 	{
@@ -122,7 +120,6 @@ private:
 	FMOD::Channel    *channel1, *channel2, *channel3, *musicChannel;
 	int               key;
 	unsigned int      version;
-
 
 public:
 	// Define transformations from local spaces to world space.
@@ -255,11 +252,7 @@ CrateApp::~CrateApp()
 	InputLayouts::DestroyAll();
 
 	//Clean up FMOD
-	result = sound1->release();
-	ERRCHECK(result);
-	result = sound2->release();
-	ERRCHECK(result);
-	result = sound3->release();
+	result = music->release();
 	ERRCHECK(result);
 	result = system->close();
 	ERRCHECK(result);
