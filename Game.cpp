@@ -24,6 +24,9 @@
 #include <cstdlib>
 #include <algorithm>
 
+#include "fmod.hpp"
+#include "fmod_errors.h"
+
 #define EPSILON 0.00001
 
 struct Cube
@@ -58,6 +61,9 @@ public:
 
 private:
 	void BuildGeometryBuffers();
+
+	void InitFMOD();
+	void UpdateSound();
 
 private:
 	ID3D11Buffer* mBoxVB;
@@ -98,6 +104,15 @@ private:
 	POINT mLastMousePos;
 	int timer = 0;
 	int whichIMG = 0;
+
+	//FMOD stuff
+	FMOD::System *system;
+	FMOD_RESULT result;
+	FMOD::Sound      *sound1, *sound2, *sound3, *music;
+	FMOD::Channel    *channel1, *channel2, *channel3, *musicChannel;
+	int               key;
+	unsigned int      version;
+
 public:
 	// Define transformations from local spaces to world space.
 	XMFLOAT4X4 mMeshWorld;
@@ -128,6 +143,15 @@ public:
 	void CleanLevel(); //cleans the level data before loading new level
 	void InitTextures();
 };
+
+void ERRCHECK(FMOD_RESULT result)
+{
+	if (result != FMOD_OK)
+	{
+		printf("FMOD error! (%d) %s\n", result, FMOD_ErrorString(result));
+		exit(-1);
+	}
+}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 				   PSTR cmdLine, int showCmd)
@@ -218,6 +242,105 @@ CrateApp::~CrateApp()
 
 	Effects::DestroyAll();
 	InputLayouts::DestroyAll();
+
+	//Clean up FMOD
+	result = sound1->release();
+	ERRCHECK(result);
+	result = sound2->release();
+	ERRCHECK(result);
+	result = sound3->release();
+	ERRCHECK(result);
+	result = system->close();
+	ERRCHECK(result);
+	result = system->release();
+	ERRCHECK(result);
+}
+
+void CrateApp::InitFMOD()
+{
+	result = FMOD::System_Create(&system);
+	ERRCHECK(result);
+
+	result = system->getVersion(&version);
+	ERRCHECK(result);
+
+	if (version < FMOD_VERSION)
+	{
+		printf("Error!  You are using an old version of FMOD %08x.  This program requires %08x\n", version, FMOD_VERSION);
+		return;
+	}
+
+	int numdrivers = 0;
+	char name[256];
+	FMOD_CAPS caps;
+	FMOD_SPEAKERMODE speakermode;
+
+	result = system->getNumDrivers(&numdrivers);
+	ERRCHECK(result);
+	if (numdrivers == 0)
+	{
+		result = system->setOutput(FMOD_OUTPUTTYPE_NOSOUND);
+		ERRCHECK(result);
+	}
+	else
+	{
+		result - system->getDriverCaps(0, &caps, 0, &speakermode);
+		ERRCHECK(result);
+		//set the user selected speaker mode.
+		result = system->setSpeakerMode(speakermode);
+		ERRCHECK(result);
+		if (caps & FMOD_CAPS_HARDWARE_EMULATED)
+		{
+			/*
+			The user has the 'Acceleration' slider set to off! This is really bad
+			for latency! You might want to warn the user about this.
+			*/
+			result = system->setDSPBufferSize(1024, 10);
+			ERRCHECK(result);
+		}
+		result = system->getDriverInfo(0, name, 256, 0);
+		ERRCHECK(result);
+		if (strstr(name, "SigmaTel"))
+		{
+			/*
+			Sigmatel sound devices crackle for some reason if the format is PCM 16bit.
+			PCM floating point output seems to solve it.
+			*/
+			result = system->setSoftwareFormat(48000, FMOD_SOUND_FORMAT_PCMFLOAT, 0, 0,
+				FMOD_DSP_RESAMPLER_LINEAR);
+			ERRCHECK(result);
+		}
+	}
+	result = system->init(100, FMOD_INIT_NORMAL, 0);
+	if (result == FMOD_ERR_OUTPUT_CREATEBUFFER)
+	{
+		/*
+		Ok, the speaker mode selected isn't supported by this soundcard. Switch it
+		back to stereo...
+		*/
+		result = system->setSpeakerMode(FMOD_SPEAKERMODE_STEREO);
+		ERRCHECK(result);
+		/*
+		... and re-init.
+		*/
+		result = system->init(100, FMOD_INIT_NORMAL, 0);
+	}
+	ERRCHECK(result);
+
+	result = system->createStream("testMusic.mp3", FMOD_HARDWARE | FMOD_LOOP_NORMAL | FMOD_2D, 0, &music);
+
+	ERRCHECK(result);
+
+	result = system->playSound(FMOD_CHANNEL_FREE, music, false, &musicChannel);
+	ERRCHECK(result);
+
+	//set volume on the channel
+	result = musicChannel->setVolume(0.05f);
+	ERRCHECK(result);
+
+	channel1 = 0;
+	channel2 = 0;
+	channel3 = 0;
 }
 
 void CrateApp::InitTextures()
