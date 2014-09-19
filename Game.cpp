@@ -124,6 +124,7 @@ private:
 	FMOD::Channel    *channel1, *channel2, *channel3, *musicChannel;
 	int               key;
 	unsigned int      version;
+	bool musicIsPlaying = true;
 
 public:
 	// Define transformations from local spaces to world space.
@@ -914,7 +915,7 @@ void CrateApp::Pick(int sx, int sy)
 			{
 				if (IsMenu)
 				{
-					switch (cubes[j]->texture)
+					switch (cubes[vectorPlace[j]]->texture)
 					{
 					case LOGOb:
 						
@@ -953,18 +954,19 @@ void CrateApp::Pick(int sx, int sy)
 						diffState = HARD;
 						break;
 					case EXITb:
-						
+						PostQuitMessage(0);
 						break;
 					case SOUNDb:
 						
 						break;
 					case MUSICb:
-						
+						musicIsPlaying = !musicIsPlaying;
+						musicChannel->setMute(musicIsPlaying);
 						break;
 					}
 					
 				}
-				else
+				else //if in game mode
 				{
 					if (cubes[vectorPlace[j]]->texture == 3)
 					{
