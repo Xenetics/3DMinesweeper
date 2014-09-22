@@ -257,12 +257,15 @@ CrateApp::~CrateApp()
 	InputLayouts::DestroyAll();
 
 	//Clean up FMOD
+	result = sound2->release();
+	ERRCHECK(result);
 	result = music->release();
 	ERRCHECK(result);
 	result = system->close();
 	ERRCHECK(result);
 	result = system->release();
 	ERRCHECK(result);
+	
 }
 
 void CrateApp::InitFMOD()
@@ -336,8 +339,10 @@ void CrateApp::InitFMOD()
 	}
 	ERRCHECK(result);
 
-	result = system->createStream("testMusic.mp3", FMOD_HARDWARE | FMOD_LOOP_NORMAL | FMOD_2D, 0, &music);
+	result = system->createSound("test2.ogg", FMOD_HARDWARE, 0, &sound2);
+	ERRCHECK(result);
 
+	result = system->createStream("testMusic.mp3", FMOD_HARDWARE | FMOD_LOOP_NORMAL | FMOD_2D, 0, &music);
 	ERRCHECK(result);
 
 	result = system->playSound(FMOD_CHANNEL_FREE, music, false, &musicChannel);
@@ -683,6 +688,8 @@ void CrateApp::OnMouseDown(WPARAM btnState, int x, int y)
 	if ((btnState & MK_LBUTTON) != 0)
 	{
 		Pick(x, y);
+		result = system->playSound(FMOD_CHANNEL_FREE, sound2, false, &channel2);
+		ERRCHECK(result);
 	}
 	if (btnState == 16)
 	{
@@ -690,6 +697,7 @@ void CrateApp::OnMouseDown(WPARAM btnState, int x, int y)
 		hasDiamond = false;
 		MakeLevel(levelWidth, levelLength, levelHeight);
 	}
+	
 }
 
 void CrateApp::OnMouseUp(WPARAM btnState, int x, int y)
