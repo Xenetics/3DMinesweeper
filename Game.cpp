@@ -204,12 +204,14 @@ mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), m
 	XMStoreFloat4x4(&mProj, I);
 
 	mBoxMat.Ambient  = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	mBoxMat.Diffuse  = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	mBoxMat.Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
+	mBoxMat.Diffuse  = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	mBoxMat.Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
+	mBoxMat.Reflect	 = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 
-	mPickedTriangleMat.Ambient = XMFLOAT4(0.0f, 0.8f, 0.4f, 1.0f);
-	mPickedTriangleMat.Diffuse = XMFLOAT4(0.0f, 0.8f, 0.4f, 1.0f);
-	mPickedTriangleMat.Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 16.0f);
+	mPickedTriangleMat.Ambient	= XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	mPickedTriangleMat.Diffuse	= XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	mPickedTriangleMat.Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
+	mPickedTriangleMat.Reflect	= XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	
 	//MakeLevel(levelWidth, levelLength, levelHeight); //makes the cube of blocks.
 	CreateMenu();
@@ -446,7 +448,7 @@ void Game::UpdateScene(float dt)
 	//
 	// Control the camera.
 	//
-	if (!menu) //disables camera control when viewing the menu
+	if (!menu || menu) //disables camera control when viewing the menu
 	{
 		if (GetAsyncKeyState('W') & 0x8000 || GetAsyncKeyState(VK_UP) & 0x8000)
 		{
@@ -517,12 +519,13 @@ void Game::DrawScene()
 	}
 	//Effects::BasicFX->SetEyePosW(mEyePosW);
 	Effects::BasicFX->SetEyePosW(mCam.GetPosition());
+	//Set Cubemap
 	Effects::BasicFX->SetCubeMap(mSky->CubeMapSRV());
 
-	ID3DX11EffectTechnique* activeTech = Effects::BasicFX->Light3TexTech;
+	ID3DX11EffectTechnique* activeTexTech = Effects::BasicFX->Light3TexTech;
 
     D3DX11_TECHNIQUE_DESC techDesc;
-	activeTech->GetDesc( &techDesc );
+	activeTexTech->GetDesc( &techDesc );
     for(UINT p = 0; p < techDesc.Passes; ++p)
     {
 		//animate fire
@@ -577,7 +580,7 @@ void Game::DrawScene()
 					break;
 				}
 
-				activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
+				activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
 				md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
 				
 				
@@ -593,7 +596,7 @@ void Game::DrawScene()
 					md3dImmediateContext->OMSetDepthStencilState(RenderStates::LessEqualDSS, 0);
 
 					Effects::BasicFX->SetMaterial(mPickedTriangleMat);
-					activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
+					activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
 					md3dImmediateContext->DrawIndexed(3, 3 * mPickedTriangle, 0);
 
 					// restore default
@@ -644,7 +647,7 @@ void Game::DrawScene()
 					break;
 				}
 
-				activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
+				activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
 				md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
 				
 				
@@ -660,7 +663,7 @@ void Game::DrawScene()
 					md3dImmediateContext->OMSetDepthStencilState(RenderStates::LessEqualDSS, 0);
 
 					Effects::BasicFX->SetMaterial(mPickedTriangleMat);
-					activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
+					activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
 					md3dImmediateContext->DrawIndexed(3, 3 * mPickedTriangle, 0);
 
 					// restore default
@@ -668,6 +671,7 @@ void Game::DrawScene()
 				}
 			}
 		}
+		//Draw Cubemap
 		mSky->Draw(md3dImmediateContext, mCam);
     }
 
@@ -1115,7 +1119,7 @@ void Game::CleanLevel()
 void Game::MenuLighting()
 {
 	
-	mDirLights[0].Ambient = XMFLOAT4(0.15f, 0.15f, 0.15f, 1.0f);
+	mDirLights[0].Ambient = XMFLOAT4(0.05f, 0.05f, 0.05f, 1.0f);
 	mDirLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
 	mDirLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
 	mDirLights[0].Direction = XMFLOAT3(0.0f, 0.0f, 0.7f);
@@ -1127,10 +1131,10 @@ void Game::MenuLighting()
 	
 	mPointLights[0].Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
 	mPointLights[0].Diffuse = XMFLOAT4(0.9f, 0.9f, 0.9f, 1.0f);
-	mPointLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
+	mPointLights[0].Specular = XMFLOAT4(0.7f, 0.7f, 0.7f, 16.0f);
 	mPointLights[0].Att = XMFLOAT3(0.4f, 0.4f, 1.0f);
-	mPointLights[0].Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	mPointLights[0].Range = 500.0f;
+	mPointLights[0].Position = XMFLOAT3(0.0f, -1.0f, 4.75f);
+	mPointLights[0].Range = 5.0f;
 	/*
 	mSpotLights[0].Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
 	mSpotLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
@@ -1150,7 +1154,7 @@ void Game::GameLighting()
 {
 	mDirLights[0].Ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
 	mDirLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	mDirLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
+	mDirLights[0].Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
 	mDirLights[0].Direction = XMFLOAT3(0.707f, -0.707f, 0.0f);
 
 	mDirLights[1].Ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
