@@ -96,6 +96,7 @@
     <ClCompile Include="LightHelper.cpp" />
     <ClCompile Include="MathHelper.cpp" />
     <ClCompile Include="RenderStates.cpp" />
+    <ClCompile Include="Sky.cpp" />
     <ClCompile Include="TextureMgr.cpp" />
     <ClCompile Include="Vertex.cpp" />
     <ClCompile Include="Waves.cpp" />
@@ -108,12 +109,12 @@
     <ClInclude Include="d3dx11effect.h" />
     <ClInclude Include="d3dxGlobal.h" />
     <ClInclude Include="Effects.h" />
-    <ClInclude Include="Effects2.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="LightHelper.h" />
     <ClInclude Include="MathHelper.h" />
     <ClInclude Include="RenderStates.h" />
+    <ClInclude Include="Sky.h" />
     <ClInclude Include="TextureMgr.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="Waves.h" />
@@ -123,14 +124,19 @@
     <None Include="FX\LightHelper.fx" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="FX\Basic.fx">
+    <CustomBuild Include="FX\Basic.fx">
       <FileType>Document</FileType>
-    </None>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <Library Include="Effects11.lib" />
     <Library Include="Effects11d.lib" />
     <Library Include="fmodex_vc.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="FX\Sky.fx">
+      <FileType>Document</FileType>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

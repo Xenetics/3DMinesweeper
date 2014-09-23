@@ -16,6 +16,7 @@
 #include "Effects.h"
 #include "Vertex.h"
 #include "Camera.h"
+#include "Sky.h"
 #include "xnacollision.h"
 #include "RenderStates.h"
 #include <string.h>
@@ -68,6 +69,8 @@ private:
 	void UpdateSound();
 
 private:
+	Sky* mSky;
+
 	ID3D11Buffer* mBoxVB;
 	ID3D11Buffer* mBoxIB;
 
@@ -84,7 +87,8 @@ private:
 
 	// Lighting variables
 	DirectionalLight mDirLights[2];
-	PointLight mPointLights[2];
+	PointLight mPointLights[1];
+	SpotLight mSpotLights[1];
 
 	// Material variables
 	Material mBoxMat;
@@ -184,7 +188,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
  
 
 CrateApp::CrateApp(HINSTANCE hInstance)
-: D3DApp(hInstance), mBoxVB(0), mBoxIB(0), mDiffuseMapSRV(0), mDiffuseMapSRV2(0), mDiffuseMapSRV4(0), mDiffuseMapSRV5(0), mEyePosW(0.0f, 0.0f, 0.0f),
+: D3DApp(hInstance), mSky(0), mBoxVB(0), mBoxIB(0), mDiffuseMapSRV(0), mDiffuseMapSRV2(0), mDiffuseMapSRV4(0), mDiffuseMapSRV5(0), mEyePosW(0.0f, 0.0f, 0.0f),
 mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), mMeshIndexCount(0), mPickedTriangle(-1)
 {
 	mDiffuseMapSRV3[0] = 0;
@@ -198,23 +202,6 @@ mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), m
 	XMStoreFloat4x4(&mTexTransform, I);
 	XMStoreFloat4x4(&mView, I);
 	XMStoreFloat4x4(&mProj, I);
-
-	mDirLights[0].Ambient  = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
-	mDirLights[0].Diffuse  = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	mDirLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
-	mDirLights[0].Direction = XMFLOAT3(0.707f, -0.707f, 0.0f);
- 
-	mDirLights[1].Ambient  = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-	mDirLights[1].Diffuse  = XMFLOAT4(1.4f, 1.4f, 1.4f, 1.0f);
-	mDirLights[1].Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 16.0f);
-	mDirLights[1].Direction = XMFLOAT3(-0.707f, 0.0f, 0.707f);
-
-	mPointLights[0].Ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	mPointLights[0].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	mPointLights[0].Specular = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	mPointLights[0].Att = XMFLOAT3(0.4f, 0.2f, 0.0f);
-	mPointLights[0].Position = XMFLOAT3(0.0f, 1.0f, 15.0f);
-	mPointLights[0].Range = 20.0f;
 
 	mBoxMat.Ambient  = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	mBoxMat.Diffuse  = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -241,6 +228,8 @@ mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), m
 
 CrateApp::~CrateApp()
 {
+	SafeDelete(mSky);
+
 	ReleaseCOM(mBoxVB);
 	ReleaseCOM(mBoxIB);
 	ReleaseCOM(mDiffuseMapSRV);
@@ -359,6 +348,9 @@ void CrateApp::InitFMOD()
 
 void CrateApp::InitTextures()
 {
+	// Skybox
+	mSky = new Sky(md3dDevice, L"Textures/nightBox.dds", 5000.0f);
+
 	//Menu Textures
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[0], 0)); //LOGO
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[1], 0)); //PLAY
@@ -525,8 +517,9 @@ void CrateApp::DrawScene()
 	}
 	//Effects::BasicFX->SetEyePosW(mEyePosW);
 	Effects::BasicFX->SetEyePosW(mCam.GetPosition());
- 
-	ID3DX11EffectTechnique* activeTech = Effects::BasicFX->Light2TexTech;
+	Effects::BasicFX->SetCubeMap(mSky->CubeMapSRV());
+
+	ID3DX11EffectTechnique* activeTech = Effects::BasicFX->Light3TexTech;
 
     D3DX11_TECHNIQUE_DESC techDesc;
 	activeTech->GetDesc( &techDesc );
@@ -554,7 +547,6 @@ void CrateApp::DrawScene()
 		{
 			for (int i = 0; i < cubes.size(); i++)
 			{
-
 				XMMATRIX world = /*XMLoadFloat4x4(&mBoxWorld);*/XMMatrixTranslationFromVector(cubes[i]->pos);
 				XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
 				XMMATRIX worldViewProj = world*view*proj;
@@ -587,6 +579,9 @@ void CrateApp::DrawScene()
 
 				activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
 				md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
+				
+				
+
 				// Restore default
 				md3dImmediateContext->RSSetState(0);
 				if (mPickedTriangle != -1)
@@ -610,7 +605,6 @@ void CrateApp::DrawScene()
 		{
 			for (int i = 0; i < cubes.size(); i++)
 			{
-
 				XMMATRIX world = XMLoadFloat4x4(&cubes[i]->localWorld)/* * XMMatrixTranslationFromVector(cubes[i]->pos)*/;
 				XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
 				XMMATRIX worldViewProj = world*view*proj;
@@ -652,6 +646,9 @@ void CrateApp::DrawScene()
 
 				activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
 				md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
+				
+				
+
 				// Restore default
 				md3dImmediateContext->RSSetState(0);
 				if (mPickedTriangle != -1)
@@ -671,6 +668,7 @@ void CrateApp::DrawScene()
 				}
 			}
 		}
+		mSky->Draw(md3dImmediateContext, mCam);
     }
 
 	HR(mSwapChain->Present(0, 0));
@@ -1116,24 +1114,36 @@ void CrateApp::CleanLevel()
 
 void CrateApp::MenuLighting()
 {
-	mDirLights[0].Ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+	
+	mDirLights[0].Ambient = XMFLOAT4(0.15f, 0.15f, 0.15f, 1.0f);
 	mDirLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
 	mDirLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
 	mDirLights[0].Direction = XMFLOAT3(0.0f, 0.0f, 0.7f);
 
-	mDirLights[1].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	mDirLights[1].Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	mDirLights[1].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 16.0f);
+	mDirLights[1].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+	mDirLights[1].Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+	mDirLights[1].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	mDirLights[1].Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
-
-	mPointLights[0].Ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	mPointLights[0].Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	mPointLights[0].Specular = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	mPointLights[0].Att = XMFLOAT3(0.4f, 0.2f, 0.0f);
-	mPointLights[0].Position = XMFLOAT3(0.0f, 1.0f, 15.0f);
-	mPointLights[0].Range = 20.0f;
-
+	
+	mPointLights[0].Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	mPointLights[0].Diffuse = XMFLOAT4(0.9f, 0.9f, 0.9f, 1.0f);
+	mPointLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
+	mPointLights[0].Att = XMFLOAT3(0.4f, 0.4f, 1.0f);
+	mPointLights[0].Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	mPointLights[0].Range = 500.0f;
+	/*
+	mSpotLights[0].Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	mSpotLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+	mSpotLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
+	mSpotLights[0].Position = XMFLOAT3(-7.0f, 3.0f, -10.0f);
+	mSpotLights[0].Direction = XMFLOAT3(-7.0f, 3.0f, 5.0f);
+	mSpotLights[0].Att = XMFLOAT3(0.4f, 0.4f, 1.0f);
+	mSpotLights[0].Spot = 1.0f;
+	mSpotLights[0].Range = 20.0f;
+	*/
 	Effects::BasicFX->SetDirLights(mDirLights);
+	Effects::BasicFX->SetPointLights(mPointLights);
+	//Effects::BasicFX->SetSpotLights(mSpotLights);
 }
 
 void CrateApp::GameLighting()
@@ -1148,5 +1158,23 @@ void CrateApp::GameLighting()
 	mDirLights[1].Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 16.0f);
 	mDirLights[1].Direction = XMFLOAT3(-0.707f, 0.0f, 0.707f);
 
+	mPointLights[0].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+	mPointLights[0].Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+	mPointLights[0].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+	mPointLights[0].Att = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	mPointLights[0].Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	mPointLights[0].Range = 0.0f;
+
+	mSpotLights[0].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	mSpotLights[0].Diffuse = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	mSpotLights[0].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	mSpotLights[0].Position = XMFLOAT3(-7.0f, 3.0f, 0.0f);
+	mSpotLights[0].Direction = XMFLOAT3(-7.0f, 3.0f, 3.0f);
+	mSpotLights[0].Att = XMFLOAT3(0.4f, 0.2f, 1.0f);
+	mSpotLights[0].Spot = 0.3f;
+	mSpotLights[0].Range = 10.0f;
+
 	Effects::BasicFX->SetDirLights(mDirLights);
+	Effects::BasicFX->SetPointLights(mPointLights);
+	Effects::BasicFX->SetSpotLights(mSpotLights);
 }
