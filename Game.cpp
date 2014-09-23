@@ -32,17 +32,20 @@
 struct Cube
 {
 	XMVECTOR pos;
-	UINT texture = 0;
+	enum cubeTextures {EMPTY,GRAY,MINE,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,TEN};
+	cubeTextures texture = GRAY;
+	UINT menuTexture;
 	XNA::AxisAlignedBox mMeshBox;
 	bool isMenu = false;
 	XMFLOAT4X4 localWorld;
+	UINT uniqueID;
+	float distanceFromCam;
 };
 
 class CrateApp : public D3DApp
 {
 public:
 	std::vector<Cube*> cubes;
-
 
 	CrateApp(HINSTANCE hInstance);
 	~CrateApp();
@@ -147,15 +150,19 @@ public:
 	std::vector<UINT> previousCubeLayer;
 	BOOL hasDiamond = false;
 
-	UINT levelWidth = 5;
-	UINT levelLength = 5;
-	UINT levelHeight = 5;
+	UINT levelWidth = 1;
+	UINT levelLength = 1;
+	UINT levelHeight = 1;
 	bool AreSame(float a, float b); //checks if floats are the same to 5 decimal places
+	bool AreSameVec(XMVECTOR a, XMVECTOR b);
 	void CreateMenu();
 	bool menu = true;
 	void CleanLevel(); //cleans the level data before loading new level
 	void InitTextures();
+	
+	static bool SortByVector(const Cube* lhs, const Cube* rhs) { return lhs->distanceFromCam < rhs->distanceFromCam; }
 };
+
 
 void ERRCHECK(FMOD_RESULT result)
 {
@@ -224,7 +231,7 @@ mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), m
 	mPickedTriangleMat.Diffuse = XMFLOAT4(0.0f, 0.8f, 0.4f, 1.0f);
 	mPickedTriangleMat.Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 16.0f);
 	
-	//MakeLevel(levelWidth, levelLength, levelHeight); //makes the cube of blocks.
+	//MakeLevel(5, 5, 5); //makes the cube of blocks.
 	CreateMenu();
 
 	//-------------------
@@ -555,54 +562,63 @@ void CrateApp::DrawScene()
 			for (int i = 0; i < cubes.size(); i++)
 			{
 
-				XMMATRIX world = /*XMLoadFloat4x4(&mBoxWorld);*/XMMatrixTranslationFromVector(cubes[i]->pos);
-				XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
-				XMMATRIX worldViewProj = world*view*proj;
-
-				Effects::BasicFX->SetWorld(world);
-				Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-				Effects::BasicFX->SetWorldViewProj(worldViewProj);
-				Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mTexTransform));
-				Effects::BasicFX->SetMaterial(mBoxMat);
-				//Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV);
-				//Effects::BasicFX->SetDiffuseMap2(mDiffuseMapSRV2);
-				switch (cubes[i]->texture) //show texture of cube
+				if (cubes[i] != NULL)
 				{
-				case 0:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV); //grass
-					break;
-				case 1:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV2); //stone
-					break;
-				case 2:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV3[whichIMG]); //fire
-					break;
-				case 3:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV4); //diamond
-					break;
-				case 4:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV5); //sand
-					break;
-				}
+					XMMATRIX world = /*XMLoadFloat4x4(&mBoxWorld);*/XMMatrixTranslationFromVector(cubes[i]->pos);
+					XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
+					XMMATRIX worldViewProj = world*view*proj;
 
-				activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
-				md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
-				// Restore default
-				md3dImmediateContext->RSSetState(0);
-				if (mPickedTriangle != -1)
-				{
-					// Change depth test from < to <= so that if we draw the same triangle twice, it will still pass
-					// the depth test.  This is because we redraw the picked triangle with a different material
-					// to highlight it.  
+					Effects::BasicFX->SetWorld(world);
+					Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+					Effects::BasicFX->SetWorldViewProj(worldViewProj);
+					Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mTexTransform));
+					Effects::BasicFX->SetMaterial(mBoxMat);
+					//Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV);
+					//Effects::BasicFX->SetDiffuseMap2(mDiffuseMapSRV2);
+					switch (cubes[i]->texture) //show texture of cube
+					{
+					case Cube::GRAY:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV); //metel box
+						break;
+					case Cube::MINE:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV4); //diamond
+						break;
+						/*case 0:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV); //grass
+							break;
+							case 1:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV2); //stone
+							break;
+							case 2:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV3[whichIMG]); //fire
+							break;
+							case 3:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV4); //diamond
+							break;
+							case 4:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV5); //sand
+							break;*/
+					}
 
-					md3dImmediateContext->OMSetDepthStencilState(RenderStates::LessEqualDSS, 0);
-
-					Effects::BasicFX->SetMaterial(mPickedTriangleMat);
 					activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
-					md3dImmediateContext->DrawIndexed(3, 3 * mPickedTriangle, 0);
+					md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
+					// Restore default
+					md3dImmediateContext->RSSetState(0);
+					if (mPickedTriangle != -1)
+					{
+						// Change depth test from < to <= so that if we draw the same triangle twice, it will still pass
+						// the depth test.  This is because we redraw the picked triangle with a different material
+						// to highlight it.  
 
-					// restore default
-					md3dImmediateContext->OMSetDepthStencilState(0, 0);
+						md3dImmediateContext->OMSetDepthStencilState(RenderStates::LessEqualDSS, 0);
+
+						Effects::BasicFX->SetMaterial(mPickedTriangleMat);
+						activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
+						md3dImmediateContext->DrawIndexed(3, 3 * mPickedTriangle, 0);
+
+						// restore default
+						md3dImmediateContext->OMSetDepthStencilState(0, 0);
+					}
 				}
 			}
 		}
@@ -610,64 +626,66 @@ void CrateApp::DrawScene()
 		{
 			for (int i = 0; i < cubes.size(); i++)
 			{
-
-				XMMATRIX world = XMLoadFloat4x4(&cubes[i]->localWorld)/* * XMMatrixTranslationFromVector(cubes[i]->pos)*/;
-				XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
-				XMMATRIX worldViewProj = world*view*proj;
-
-				Effects::BasicFX->SetWorld(world);
-				Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
-				Effects::BasicFX->SetWorldViewProj(worldViewProj);
-				Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mTexTransform));
-				Effects::BasicFX->SetMaterial(mBoxMat);
-				//Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV);
-				//Effects::BasicFX->SetDiffuseMap2(mDiffuseMapSRV2);
-				switch (cubes[i]->texture) //show texture of cube
+				if (cubes[i] != NULL)
 				{
-				case LOGOb:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[0]);
-					break;
-				case PLAYb:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[1]);
-					break;
-				case EASYb:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[2]);
-					break;
-				case MEDIUMb:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[3]);
-					break;
-				case HARDb:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[4]);
-					break;
-				case EXITb:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[5]);
-					break;
-				case SOUNDb:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[6]);
-					break;
-				case MUSICb:
-					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[7]);
-					break;
-				}
+					XMMATRIX world = XMLoadFloat4x4(&cubes[i]->localWorld)/* * XMMatrixTranslationFromVector(cubes[i]->pos)*/;
+					XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
+					XMMATRIX worldViewProj = world*view*proj;
 
-				activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
-				md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
-				// Restore default
-				md3dImmediateContext->RSSetState(0);
-				if (mPickedTriangle != -1)
-				{
-					// Change depth test from < to <= so that if we draw the same triangle twice, it will still pass
-					// the depth test.  This is because we redraw the picked triangle with a different material
-					// to highlight it.  
+					Effects::BasicFX->SetWorld(world);
+					Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+					Effects::BasicFX->SetWorldViewProj(worldViewProj);
+					Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mTexTransform));
+					Effects::BasicFX->SetMaterial(mBoxMat);
+					//Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV);
+					//Effects::BasicFX->SetDiffuseMap2(mDiffuseMapSRV2);
+					switch (cubes[i]->texture) //show texture of cube
+					{
+					case LOGOb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[0]);
+						break;
+					case PLAYb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[1]);
+						break;
+					case EASYb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[2]);
+						break;
+					case MEDIUMb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[3]);
+						break;
+					case HARDb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[4]);
+						break;
+					case EXITb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[5]);
+						break;
+					case SOUNDb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[6]);
+						break;
+					case MUSICb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[7]);
+						break;
+					}
 
-					md3dImmediateContext->OMSetDepthStencilState(RenderStates::LessEqualDSS, 0);
-
-					Effects::BasicFX->SetMaterial(mPickedTriangleMat);
 					activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
-					md3dImmediateContext->DrawIndexed(3, 3 * mPickedTriangle, 0);
+					md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
+					// Restore default
+					md3dImmediateContext->RSSetState(0);
+					if (mPickedTriangle != -1)
+					{
+						// Change depth test from < to <= so that if we draw the same triangle twice, it will still pass
+						// the depth test.  This is because we redraw the picked triangle with a different material
+						// to highlight it.  
 
-					// restore default
-					md3dImmediateContext->OMSetDepthStencilState(0, 0);
+						md3dImmediateContext->OMSetDepthStencilState(RenderStates::LessEqualDSS, 0);
+
+						Effects::BasicFX->SetMaterial(mPickedTriangleMat);
+						activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
+						md3dImmediateContext->DrawIndexed(3, 3 * mPickedTriangle, 0);
+
+						// restore default
+						md3dImmediateContext->OMSetDepthStencilState(0, 0);
+					}
 				}
 			}
 		}
@@ -792,6 +810,9 @@ void CrateApp::BuildGeometryBuffers()
 
 void CrateApp::MakeLevel(UINT width, UINT length, UINT height)
 {
+	levelWidth = width;
+	levelLength = length;
+	levelHeight = height;
 	//UINT arraySize = width*length;
 	//UINT blockData[arraySize];
 	int x = 0; //width
@@ -815,22 +836,24 @@ void CrateApp::MakeLevel(UINT width, UINT length, UINT height)
 
 		
 		//c->texture = SetCubeTexture(i, x, y, z, width, length, height);
-		if (c->texture == 5)
+		/*if (c->texture == Cube::EMPTY)
 		{
 			delete(c);
 		}
 		else
-		{
+		{*/
+			c->texture = Cube::GRAY;
 			c->pos = XMVectorSet(x, y, z, 1);
+			c->uniqueID = i;
 			XMStoreFloat3(&c->mMeshBox.Center, c->pos);
 			XMVECTOR halfSize = XMVectorSet(0.5f, 0.5f, 0.5f, 1.0f);
 			XMStoreFloat3(&c->mMeshBox.Extents, halfSize);
 
-			CrateApp::cubes.push_back(c);
-		}
+			cubes.push_back(c);
+		//}
 		x++;
 	}
-	cubes[rand() % cubes.size()]->texture = 3;
+	cubes[rand() % cubes.size()]->texture = Cube::MINE;
 	hasDiamond = true;
 }
 
@@ -857,6 +880,26 @@ UINT CrateApp::SetCubeTexture(UINT cube, UINT x, UINT y, UINT z, UINT width, UIN
 		return 5; // delete cube
 	}
 }
+
+
+
+bool CrateApp::AreSame(float a, float b)
+{
+	return fabs(a - b) < EPSILON;
+}
+
+bool CrateApp::AreSameVec(XMVECTOR a, XMVECTOR b)
+{
+	if (XMVectorGetIntX(a) - XMVectorGetIntX(b) < EPSILON &&
+		XMVectorGetIntY(a) - XMVectorGetIntY(b) < EPSILON &&
+		XMVectorGetIntZ(a) - XMVectorGetIntZ(b) < EPSILON)
+	{
+		return true;
+	}
+	else
+		return false;
+}
+
 
 void CrateApp::Pick(int sx, int sy)
 {
@@ -889,44 +932,39 @@ void CrateApp::Pick(int sx, int sy)
 	// If we did not hit the bounding box, then it is impossible that we hit 
 	// the Mesh, so do not waste effort doing ray/triangle tests.
 
-	// Assume we have not picked anything yet, so init to -1.
-	mPickedTriangle = -1;
+	mPickedTriangle = -1;// Assume we have not picked anything yet, so init to -1.
 	float tmin = 0.0f;
-	std::vector<float> cubesHit;
-	std::vector<int> vectorPlace;
+	std::vector<Cube*> cubesTouched;
 
-	for (int i = 0; i < CrateApp::cubes.size(); i++)
+	// Make the ray direction unit length for the intersection tests.
+	rayDir = XMVector3Normalize(rayDir);
+	for (int i = 0; i < cubes.size(); i++)
 	{
-		// Make the ray direction unit length for the intersection tests.
-		rayDir = XMVector3Normalize(rayDir);
-		if (XNA::IntersectRayAxisAlignedBox(rayOrigin, rayDir, &CrateApp::cubes[i]->mMeshBox /*&mMeshBox*/, &tmin))
+		if (cubes[i] != NULL)
 		{
-			XMVECTOR temp = XMVector3Length(cubes[i]->pos)/* - XMVector3Length(mCam.GetPositionXM())*/;
-			cubesHit.push_back(XMVectorGetX(temp));
-			vectorPlace.push_back(i);
-//TODO check which box's position is closest to ray origion through magnitude of vector.
-			
-			//delete(cubes[i]);
-			//CrateApp::cubes.erase(cubes.begin() + i);
-			//break;
-		}
-
-	}
-	
-	if (!cubesHit.empty())
-	{
-		std::sort(cubesHit.begin(), cubesHit.end());
-		
-		for (int j = 0; j < vectorPlace.size(); j++)
-		{
-			if (AreSame(XMVectorGetX(XMVector3Length(cubes[vectorPlace[j]]->pos)),cubesHit[0]))
+			// Make the ray direction unit length for the intersection tests.
+			rayDir = XMVector3Normalize(rayDir);
+			if (XNA::IntersectRayAxisAlignedBox(rayOrigin, rayDir, &CrateApp::cubes[i]->mMeshBox, &tmin))
 			{
-				if (IsMenu)
+				XMVECTOR temp = XMVector3Length(mCam.GetPositionXM() - cubes[i]->pos);
+				cubes[i]->distanceFromCam = XMVectorGetIntX(temp);
+				cubesTouched.push_back(cubes[i]);
+			}
+		}
+	}
+
+	if (menu)
+	{
+		if (!cubesTouched.empty())
+		{
+			for (int i = 0; i < cubesTouched.size(); i++)
+			{
+				if (AreSameVec(XMVector3Length(mCam.GetPositionXM() - cubesTouched[i]->pos), XMVector3Length(mCam.GetPositionXM() - cubesTouched[i]->pos)))
 				{
-					switch (cubes[vectorPlace[j]]->texture)
+					switch (cubesTouched[i]->menuTexture)
 					{
 					case LOGOb:
-						
+
 						break;
 					case PLAYb:
 						switch (diffState)
@@ -950,7 +988,7 @@ void CrateApp::Pick(int sx, int sy)
 							MessageBox(0, L"Please Choose Your Difficulty and Try Again", L"Error", MB_OK);
 							break;
 						}
-						
+
 						break;
 					case EASYb:
 						diffState = EASY;
@@ -965,49 +1003,29 @@ void CrateApp::Pick(int sx, int sy)
 						PostQuitMessage(0);
 						break;
 					case SOUNDb:
-						
+
 						break;
 					case MUSICb:
 						musicIsPlaying = !musicIsPlaying;
 						musicChannel->setMute(musicIsPlaying);
 						break;
 					}
-					
-				}
-				else //if in game mode
-				{
-					if (cubes[vectorPlace[j]]->texture == 3)
-					{
-						MessageBox(0, L"You Found The Diamond!\n Press OK to play again.", L"Click Counter", MB_OK);
-						cubes.clear();
-						hasDiamond = false;
-						MakeLevel(levelWidth, levelLength, levelHeight);
-						break;
-					}
-					else if (cubes[vectorPlace[j]]->texture == 2)
-					{
-						//play sound!!
-						cubes.clear();
-						hasDiamond = false;
-						MakeLevel(levelWidth, levelLength, levelHeight);
-						break;
-					}
-					delete(cubes[vectorPlace[j]]);
-					cubes.erase(cubes.begin() + vectorPlace[j]);
-					break;
 				}
 			}
 		}
-		
-		cubesHit.clear();
-		vectorPlace.clear();
 	}
-	
-}
+	else //in game
+	{
+		if (!cubesTouched.empty())
+		{
+			std::sort(cubesTouched.begin(), cubesTouched.end(),SortByVector);
 
-bool CrateApp::AreSame(float a, float b)
-{
-	return fabs(a - b) < EPSILON;
+			int place = cubesTouched[0]->uniqueID;
+			delete(cubes[place]);
+			cubes[place] = NULL;
+			//cubes.erase(cubes.begin() + place);
+		}
+	}
 }
 
 void CrateApp::CreateMenu()
@@ -1020,7 +1038,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&logoButton->mMeshBox.Center, logoButton->pos); //sets the center of the mesh box for click detection
 	XMVECTOR logoHalfSize = XMVectorSet(10.0f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
 	XMStoreFloat3(&logoButton->mMeshBox.Extents, logoHalfSize);
-	logoButton->texture = LOGOb; //sets the texture of button; 
+	logoButton->menuTexture = LOGOb; //sets the texture of button; 
 	logoButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
 	CrateApp::cubes.push_back(logoButton); //adds the play button to the array of cubes to draw
 
@@ -1032,7 +1050,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&playButton->mMeshBox.Center, playButton->pos); //sets the center of the mesh box for click detection
 	XMVECTOR halfSize = XMVectorSet(2.5f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
 	XMStoreFloat3(&playButton->mMeshBox.Extents, halfSize);
-	playButton->texture = PLAYb; //sets the texture of button; 
+	playButton->menuTexture = PLAYb; //sets the texture of button; 
 	playButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
 	CrateApp::cubes.push_back(playButton); //adds the play button to the array of cubes to draw
 
@@ -1044,7 +1062,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&easyButton->mMeshBox.Center, easyButton->pos);
 	XMVECTOR ehalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&easyButton->mMeshBox.Extents, ehalfSize);
-	easyButton->texture = EASYb;
+	easyButton->menuTexture = EASYb;
 	easyButton->isMenu = true;
 	CrateApp::cubes.push_back(easyButton);
 
@@ -1056,7 +1074,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&midButton->mMeshBox.Center, midButton->pos);
 	XMVECTOR midHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&midButton->mMeshBox.Extents, midHalfSize);
-	midButton->texture = MEDIUMb;
+	midButton->menuTexture = MEDIUMb;
 	midButton->isMenu = true;
 	CrateApp::cubes.push_back(midButton);
 
@@ -1068,7 +1086,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&hardButton->mMeshBox.Center, hardButton->pos);
 	XMVECTOR hardHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&hardButton->mMeshBox.Extents, hardHalfSize);
-	hardButton->texture = HARDb;
+	hardButton->menuTexture = HARDb;
 	hardButton->isMenu = true;
 	CrateApp::cubes.push_back(hardButton);
 
@@ -1080,7 +1098,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&exitButton->mMeshBox.Center, exitButton->pos);
 	XMVECTOR exitHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&exitButton->mMeshBox.Extents, exitHalfSize);
-	exitButton->texture = EXITb;
+	exitButton->menuTexture = EXITb;
 	exitButton->isMenu = true;
 	CrateApp::cubes.push_back(exitButton);
 
@@ -1092,7 +1110,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&soundButton->mMeshBox.Center, soundButton->pos);
 	XMVECTOR sHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&soundButton->mMeshBox.Extents, sHalfSize);
-	soundButton->texture = SOUNDb;
+	soundButton->menuTexture = SOUNDb;
 	soundButton->isMenu = true;
 	CrateApp::cubes.push_back(soundButton);
 
@@ -1104,7 +1122,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&musicButton->mMeshBox.Center, musicButton->pos);
 	XMVECTOR musicHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
 	XMStoreFloat3(&musicButton->mMeshBox.Extents, musicHalfSize);
-	musicButton->texture = MUSICb;
+	musicButton->menuTexture = MUSICb;
 	musicButton->isMenu = true;
 	CrateApp::cubes.push_back(musicButton);
 }
