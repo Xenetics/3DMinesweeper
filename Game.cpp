@@ -352,14 +352,14 @@ void Game::InitTextures()
 	mSky = new Sky(md3dDevice, L"Textures/nightBox.dds", 5000.0f);
 
 	//Menu Textures
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[0], 0)); //LOGO
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[1], 0)); //PLAY
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[2], 0)); //EASY
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[3], 0)); //MEDIUM
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[4], 0)); //HARD
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[5], 0)); //EXIT
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[6], 0)); //SOUND
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/test.png", 0, 0, &mDiffuseMapSRVMenuButtons[7], 0)); //MUSIC
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/logo.png", 0, 0, &mDiffuseMapSRVMenuButtons[0], 0)); //LOGO
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/play.png", 0, 0, &mDiffuseMapSRVMenuButtons[1], 0)); //PLAY
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/easy.png", 0, 0, &mDiffuseMapSRVMenuButtons[2], 0)); //EASY
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/medium.png", 0, 0, &mDiffuseMapSRVMenuButtons[3], 0)); //MEDIUM
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/hard.png", 0, 0, &mDiffuseMapSRVMenuButtons[4], 0)); //HARD
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/exit.png", 0, 0, &mDiffuseMapSRVMenuButtons[5], 0)); //EXIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/soundfx.png", 0, 0, &mDiffuseMapSRVMenuButtons[6], 0)); //SOUND
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/music.png", 0, 0, &mDiffuseMapSRVMenuButtons[7], 0)); //MUSIC
 
 	//Game Textures
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
@@ -1028,7 +1028,7 @@ void Game::CreateMenu()
 	XMMATRIX boxScale = XMMatrixScaling(10.0f, 2.0f, 1.0f); //set the scale of the button
 	XMStoreFloat4x4(&playButton->localWorld, XMMatrixMultiply(boxScale, XMMatrixTranslationFromVector(playButton->pos)));
 	XMStoreFloat3(&playButton->mMeshBox.Center, playButton->pos); //sets the center of the mesh box for click detection
-	XMVECTOR halfSize = XMVectorSet(2.5f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
+	XMVECTOR halfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
 	XMStoreFloat3(&playButton->mMeshBox.Extents, halfSize);
 	playButton->texture = PLAYb; //sets the texture of button; 
 	playButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
@@ -1040,7 +1040,7 @@ void Game::CreateMenu()
 	XMMATRIX eboxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&easyButton->localWorld, XMMatrixMultiply(eboxScale, XMMatrixTranslationFromVector(easyButton->pos)));
 	XMStoreFloat3(&easyButton->mMeshBox.Center, easyButton->pos);
-	XMVECTOR ehalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
+	XMVECTOR ehalfSize = XMVectorSet(3.0f, 0.5f, 0.5f, 1.5f);
 	XMStoreFloat3(&easyButton->mMeshBox.Extents, ehalfSize);
 	easyButton->texture = EASYb;
 	easyButton->isMenu = true;
@@ -1052,7 +1052,7 @@ void Game::CreateMenu()
 	XMMATRIX midboxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&midButton->localWorld, XMMatrixMultiply(midboxScale, XMMatrixTranslationFromVector(midButton->pos)));
 	XMStoreFloat3(&midButton->mMeshBox.Center, midButton->pos);
-	XMVECTOR midHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
+	XMVECTOR midHalfSize = XMVectorSet(3.0f, 0.5f, 0.5f, 1.5f);
 	XMStoreFloat3(&midButton->mMeshBox.Extents, midHalfSize);
 	midButton->texture = MEDIUMb;
 	midButton->isMenu = true;
@@ -1064,7 +1064,7 @@ void Game::CreateMenu()
 	XMMATRIX hBoxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&hardButton->localWorld, XMMatrixMultiply(hBoxScale, XMMatrixTranslationFromVector(hardButton->pos)));
 	XMStoreFloat3(&hardButton->mMeshBox.Center, hardButton->pos);
-	XMVECTOR hardHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
+	XMVECTOR hardHalfSize = XMVectorSet(3.0f, 0.5f, 0.5f, 1.0f);
 	XMStoreFloat3(&hardButton->mMeshBox.Extents, hardHalfSize);
 	hardButton->texture = HARDb;
 	hardButton->isMenu = true;
@@ -1076,7 +1076,7 @@ void Game::CreateMenu()
 	XMMATRIX exBoxScale = XMMatrixScaling(2.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&exitButton->localWorld, XMMatrixMultiply(exBoxScale, XMMatrixTranslationFromVector(exitButton->pos)));
 	XMStoreFloat3(&exitButton->mMeshBox.Center, exitButton->pos);
-	XMVECTOR exitHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
+	XMVECTOR exitHalfSize = XMVectorSet(1.0f, 0.5f, 0.5f, 1.0f);
 	XMStoreFloat3(&exitButton->mMeshBox.Extents, exitHalfSize);
 	exitButton->texture = EXITb;
 	exitButton->isMenu = true;
@@ -1088,7 +1088,7 @@ void Game::CreateMenu()
 	XMMATRIX sBoxScale = XMMatrixScaling(4.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&soundButton->localWorld, XMMatrixMultiply(sBoxScale, XMMatrixTranslationFromVector(soundButton->pos)));
 	XMStoreFloat3(&soundButton->mMeshBox.Center, soundButton->pos);
-	XMVECTOR sHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
+	XMVECTOR sHalfSize = XMVectorSet(2.0f, 0.5f, 0.5f, 1.0f);
 	XMStoreFloat3(&soundButton->mMeshBox.Extents, sHalfSize);
 	soundButton->texture = SOUNDb;
 	soundButton->isMenu = true;
@@ -1100,7 +1100,7 @@ void Game::CreateMenu()
 	XMMATRIX musicBoxScale = XMMatrixScaling(4.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&musicButton->localWorld, XMMatrixMultiply(musicBoxScale, XMMatrixTranslationFromVector(musicButton->pos)));
 	XMStoreFloat3(&musicButton->mMeshBox.Center, musicButton->pos);
-	XMVECTOR musicHalfSize = XMVectorSet(1.5f, 1.5f, 1.5f, 1.5f);
+	XMVECTOR musicHalfSize = XMVectorSet(2.0f, 0.5f, 0.5f, 1.0f);
 	XMStoreFloat3(&musicButton->mMeshBox.Extents, musicHalfSize);
 	musicButton->texture = MUSICb;
 	musicButton->isMenu = true;
