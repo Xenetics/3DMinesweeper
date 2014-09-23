@@ -39,14 +39,14 @@ struct Cube
 	XMFLOAT4X4 localWorld;
 };
 
-class CrateApp : public D3DApp
+class Game : public D3DApp
 {
 public:
 	std::vector<Cube*> cubes;
 
 
-	CrateApp(HINSTANCE hInstance);
-	~CrateApp();
+	Game(HINSTANCE hInstance);
+	~Game();
 
 	bool Init();
 	void OnResize();
@@ -178,7 +178,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
 
-	CrateApp theApp(hInstance);
+	Game theApp(hInstance);
 	
 	if( !theApp.Init() )
 		return 0;
@@ -187,7 +187,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 }
  
 
-CrateApp::CrateApp(HINSTANCE hInstance)
+Game::Game(HINSTANCE hInstance)
 : D3DApp(hInstance), mSky(0), mBoxVB(0), mBoxIB(0), mDiffuseMapSRV(0), mDiffuseMapSRV2(0), mDiffuseMapSRV4(0), mDiffuseMapSRV5(0), mEyePosW(0.0f, 0.0f, 0.0f),
 mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), mMeshIndexCount(0), mPickedTriangle(-1)
 {
@@ -226,7 +226,7 @@ mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), m
 	
 }
 
-CrateApp::~CrateApp()
+Game::~Game()
 {
 	SafeDelete(mSky);
 
@@ -257,7 +257,7 @@ CrateApp::~CrateApp()
 	
 }
 
-void CrateApp::InitFMOD()
+void Game::InitFMOD()
 {
 	result = FMOD::System_Create(&system);
 	ERRCHECK(result);
@@ -346,7 +346,7 @@ void CrateApp::InitFMOD()
 	channel3 = 0;
 }
 
-void CrateApp::InitTextures()
+void Game::InitTextures()
 {
 	// Skybox
 	mSky = new Sky(md3dDevice, L"Textures/nightBox.dds", 5000.0f);
@@ -375,7 +375,7 @@ void CrateApp::InitTextures()
 		L"Textures/sand.jpg", 0, 0, &mDiffuseMapSRV5, 0));
 }
 
-bool CrateApp::Init()
+bool Game::Init()
 {
 	if(!D3DApp::Init())
 		return false;
@@ -416,7 +416,7 @@ bool CrateApp::Init()
 	return true;
 }
 
-void CrateApp::OnResize()
+void Game::OnResize()
 {
 	D3DApp::OnResize();
 
@@ -426,7 +426,7 @@ void CrateApp::OnResize()
 	mCam.SetLens(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 }
 
-void CrateApp::UpdateScene(float dt)
+void Game::UpdateScene(float dt)
 {
 	// Convert Spherical to Cartesian coordinates.
 	float x = mRadius*sinf(mPhi)*cosf(mTheta);
@@ -485,7 +485,7 @@ void CrateApp::UpdateScene(float dt)
 	}
 }
 
-void CrateApp::DrawScene()
+void Game::DrawScene()
 {
 	md3dImmediateContext->ClearRenderTargetView(mRenderTargetView, reinterpret_cast<const float*>(&Colors::LightSteelBlue));
 	md3dImmediateContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
@@ -674,7 +674,7 @@ void CrateApp::DrawScene()
 	HR(mSwapChain->Present(0, 0));
 }
 
-void CrateApp::OnMouseDown(WPARAM btnState, int x, int y)
+void Game::OnMouseDown(WPARAM btnState, int x, int y)
 {
 	/*if ((btnState & MK_LBUTTON) != 0)
 	{
@@ -698,12 +698,12 @@ void CrateApp::OnMouseDown(WPARAM btnState, int x, int y)
 	
 }
 
-void CrateApp::OnMouseUp(WPARAM btnState, int x, int y)
+void Game::OnMouseUp(WPARAM btnState, int x, int y)
 {
 	ReleaseCapture();
 }
 
-void CrateApp::OnMouseMove(WPARAM btnState, int x, int y)
+void Game::OnMouseMove(WPARAM btnState, int x, int y)
 {
 	/*if ((btnState & MK_RBUTTON) != 0 && !menu)
 	{
@@ -719,7 +719,7 @@ void CrateApp::OnMouseMove(WPARAM btnState, int x, int y)
 	mLastMousePos.y = y;*/
 }
 
-void CrateApp::OnMouseWheelMove(WPARAM btnState,int fwKeys, int zDelta, int x, int y)
+void Game::OnMouseWheelMove(WPARAM btnState,int fwKeys, int zDelta, int x, int y)
 {
 	if (!menu)
 	{
@@ -737,7 +737,7 @@ void CrateApp::OnMouseWheelMove(WPARAM btnState,int fwKeys, int zDelta, int x, i
 	}
 }
 
-void CrateApp::BuildGeometryBuffers()
+void Game::BuildGeometryBuffers()
 {
 	GeometryGenerator::MeshData box;
 	GeometryGenerator geoGen;
@@ -788,7 +788,7 @@ void CrateApp::BuildGeometryBuffers()
 	
 }
 
-void CrateApp::MakeLevel(UINT width, UINT length, UINT height)
+void Game::MakeLevel(UINT width, UINT length, UINT height)
 {
 	//UINT arraySize = width*length;
 	//UINT blockData[arraySize];
@@ -824,7 +824,7 @@ void CrateApp::MakeLevel(UINT width, UINT length, UINT height)
 			XMVECTOR halfSize = XMVectorSet(0.5f, 0.5f, 0.5f, 1.0f);
 			XMStoreFloat3(&c->mMeshBox.Extents, halfSize);
 
-			CrateApp::cubes.push_back(c);
+			Game::cubes.push_back(c);
 		}
 		x++;
 	}
@@ -832,7 +832,7 @@ void CrateApp::MakeLevel(UINT width, UINT length, UINT height)
 	hasDiamond = true;
 }
 
-UINT CrateApp::SetCubeTexture(UINT cube, UINT x, UINT y, UINT z, UINT width, UINT height, UINT length)
+UINT Game::SetCubeTexture(UINT cube, UINT x, UINT y, UINT z, UINT width, UINT height, UINT length)
 {
 
 	if (y == 0)
@@ -856,7 +856,7 @@ UINT CrateApp::SetCubeTexture(UINT cube, UINT x, UINT y, UINT z, UINT width, UIN
 	}
 }
 
-void CrateApp::Pick(int sx, int sy)
+void Game::Pick(int sx, int sy)
 {
 	XMMATRIX P = mCam.Proj();
 
@@ -893,11 +893,11 @@ void CrateApp::Pick(int sx, int sy)
 	std::vector<float> cubesHit;
 	std::vector<int> vectorPlace;
 
-	for (int i = 0; i < CrateApp::cubes.size(); i++)
+	for (int i = 0; i < Game::cubes.size(); i++)
 	{
 		// Make the ray direction unit length for the intersection tests.
 		rayDir = XMVector3Normalize(rayDir);
-		if (XNA::IntersectRayAxisAlignedBox(rayOrigin, rayDir, &CrateApp::cubes[i]->mMeshBox /*&mMeshBox*/, &tmin))
+		if (XNA::IntersectRayAxisAlignedBox(rayOrigin, rayDir, &Game::cubes[i]->mMeshBox /*&mMeshBox*/, &tmin))
 		{
 			XMVECTOR temp = XMVector3Length(cubes[i]->pos)/* - XMVector3Length(mCam.GetPositionXM())*/;
 			cubesHit.push_back(XMVectorGetX(temp));
@@ -905,7 +905,7 @@ void CrateApp::Pick(int sx, int sy)
 //TODO check which box's position is closest to ray origion through magnitude of vector.
 			
 			//delete(cubes[i]);
-			//CrateApp::cubes.erase(cubes.begin() + i);
+			//Game::cubes.erase(cubes.begin() + i);
 			//break;
 		}
 
@@ -1003,12 +1003,12 @@ void CrateApp::Pick(int sx, int sy)
 	
 }
 
-bool CrateApp::AreSame(float a, float b)
+bool Game::AreSame(float a, float b)
 {
 	return fabs(a - b) < EPSILON;
 }
 
-void CrateApp::CreateMenu()
+void Game::CreateMenu()
 {
 	// LOGO
 	Cube * logoButton = new Cube; //creates new block
@@ -1020,7 +1020,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&logoButton->mMeshBox.Extents, logoHalfSize);
 	logoButton->texture = LOGOb; //sets the texture of button; 
 	logoButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
-	CrateApp::cubes.push_back(logoButton); //adds the play button to the array of cubes to draw
+	Game::cubes.push_back(logoButton); //adds the play button to the array of cubes to draw
 
 	//PLAY BUTTON
 	Cube * playButton = new Cube; //creates new block
@@ -1032,7 +1032,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&playButton->mMeshBox.Extents, halfSize);
 	playButton->texture = PLAYb; //sets the texture of button; 
 	playButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
-	CrateApp::cubes.push_back(playButton); //adds the play button to the array of cubes to draw
+	Game::cubes.push_back(playButton); //adds the play button to the array of cubes to draw
 
 	// EASY BUTTON
 	Cube * easyButton = new Cube;
@@ -1044,7 +1044,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&easyButton->mMeshBox.Extents, ehalfSize);
 	easyButton->texture = EASYb;
 	easyButton->isMenu = true;
-	CrateApp::cubes.push_back(easyButton);
+	Game::cubes.push_back(easyButton);
 
 	//MEDIUM BUTTON
 	Cube * midButton = new Cube;
@@ -1056,7 +1056,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&midButton->mMeshBox.Extents, midHalfSize);
 	midButton->texture = MEDIUMb;
 	midButton->isMenu = true;
-	CrateApp::cubes.push_back(midButton);
+	Game::cubes.push_back(midButton);
 
 	//HARD BUTTON
 	Cube * hardButton = new Cube;
@@ -1068,7 +1068,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&hardButton->mMeshBox.Extents, hardHalfSize);
 	hardButton->texture = HARDb;
 	hardButton->isMenu = true;
-	CrateApp::cubes.push_back(hardButton);
+	Game::cubes.push_back(hardButton);
 
 	//EXIT BUTTON
 	Cube * exitButton = new Cube;
@@ -1080,7 +1080,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&exitButton->mMeshBox.Extents, exitHalfSize);
 	exitButton->texture = EXITb;
 	exitButton->isMenu = true;
-	CrateApp::cubes.push_back(exitButton);
+	Game::cubes.push_back(exitButton);
 
 	//SOUND TOGGLE
 	Cube * soundButton = new Cube;
@@ -1092,7 +1092,7 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&soundButton->mMeshBox.Extents, sHalfSize);
 	soundButton->texture = SOUNDb;
 	soundButton->isMenu = true;
-	CrateApp::cubes.push_back(soundButton);
+	Game::cubes.push_back(soundButton);
 
 	//MUSIC TOGGLE
 	Cube * musicButton = new Cube;
@@ -1104,15 +1104,15 @@ void CrateApp::CreateMenu()
 	XMStoreFloat3(&musicButton->mMeshBox.Extents, musicHalfSize);
 	musicButton->texture = MUSICb;
 	musicButton->isMenu = true;
-	CrateApp::cubes.push_back(musicButton);
+	Game::cubes.push_back(musicButton);
 }
 
-void CrateApp::CleanLevel()
+void Game::CleanLevel()
 {
 	cubes.clear();
 }
 
-void CrateApp::MenuLighting()
+void Game::MenuLighting()
 {
 	
 	mDirLights[0].Ambient = XMFLOAT4(0.15f, 0.15f, 0.15f, 1.0f);
@@ -1146,7 +1146,7 @@ void CrateApp::MenuLighting()
 	//Effects::BasicFX->SetSpotLights(mSpotLights);
 }
 
-void CrateApp::GameLighting()
+void Game::GameLighting()
 {
 	mDirLights[0].Ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
 	mDirLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
