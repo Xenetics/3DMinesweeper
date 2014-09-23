@@ -634,7 +634,7 @@ void Game::DrawScene()
 					Effects::BasicFX->SetMaterial(mBoxMat);
 					//Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV);
 					//Effects::BasicFX->SetDiffuseMap2(mDiffuseMapSRV2);
-					switch (cubes[i]->texture) //show texture of cube
+					switch (cubes[i]->menuTexture) //show texture of cube
 					{
 					case LOGOb:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[0]);
