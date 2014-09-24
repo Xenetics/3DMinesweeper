@@ -230,7 +230,7 @@ mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), m
 	//XMMATRIX MeshOffset = XMMatrixTranslation(0.0f, 1.0f, 0.0f);
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixMultiply(MeshScale, MeshOffset));
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixTranslation(levelWidth*0.5f, levelLength * 0.5f, levelHeight * 0.5f));
-	mCam.SetPosition(0.0f, 0.0f, -15.0f);
+	mCam.SetPosition(0.0f, 0.0f, -18.0f);
 
 	
 }
@@ -461,31 +461,41 @@ void Game::UpdateScene(float dt)
 		if (GetAsyncKeyState('W') & 0x8000 || GetAsyncKeyState(VK_UP) & 0x8000)
 		{
 			//mCam.Walk(10.0f*dt);
-			mCam.OrbitVertical(1 * dt);
+			mCam.OrbitVertical(2 * dt);
 		}
 		if (GetAsyncKeyState('S') & 0x8000 || GetAsyncKeyState(VK_DOWN) & 0x8000)
 		{
 			//mCam.Walk(-10.0f*dt);
-			mCam.OrbitVertical(-1 * dt);
+			mCam.OrbitVertical(-2 * dt);
 		}
 		if (GetAsyncKeyState('A') & 0x8000 || GetAsyncKeyState(VK_LEFT) & 0x8000)
 		{
 			//mCam.Strafe(-10.0f*dt);
-			mCam.OrbitHorizontal(-1 * dt);
+			mCam.OrbitHorizontal(-2 * dt);
 		}
 		if (GetAsyncKeyState('D') & 0x8000 || GetAsyncKeyState(VK_RIGHT) & 0x8000)
 		{
 			//mCam.Strafe(10.0f*dt);
-			mCam.OrbitHorizontal(1 * dt);
+			mCam.OrbitHorizontal(2 * dt);
 		}
-
+		//Zoom controls
 		if (GetAsyncKeyState('Q') & 0x8000)
 		{
-			mCam.Walk(10.0f*dt);
+			XMVECTOR distance = XMVector3Length(mCam.GetPositionXM() - XMVectorZero());
+			float length = XMVectorGetByIndex(distance, 1);
+			if (length > 5) 
+			{
+				mCam.Walk(10*dt);
+			}
 		}
 		if (GetAsyncKeyState('E') & 0x8000)
 		{
-			mCam.Walk(-10.0f*dt);
+			XMVECTOR distance = XMVector3Length(mCam.GetPositionXM() - XMVectorZero());
+			float length = XMVectorGetByIndex(distance, 1);
+			if (length < 30)
+			{
+				mCam.Walk(-10*dt);
+			}
 		}
 	}
 
@@ -840,7 +850,7 @@ void Game::MakeLevel(UINT width, UINT length, UINT height)
 		else
 		{*/
 			c->texture = Cube::GRAY;
-			c->pos = XMVectorSet(x, y, z, 1);
+			c->pos = XMVectorSet(x-(width*0.5f)+0.5f, y-(height*0.5f)+0.5f, z-(length*0.5f)+0.5f, 1);
 			c->uniqueID = i;
 			XMStoreFloat3(&c->mMeshBox.Center, c->pos);
 			XMVECTOR halfSize = XMVectorSet(0.5f, 0.5f, 0.5f, 1.0f);
@@ -964,17 +974,17 @@ void Game::Pick(int sx, int sy)
 						{
 						case EASY:
 							CleanLevel();
-							MakeLevel(3, 3, 3);
+							MakeLevel(6, 6, 6);
 							menu = false;
 							break;
 						case MEDIUM:
 							CleanLevel();
-							MakeLevel(4, 4, 4);
+							MakeLevel(8, 8, 8);
 							menu = false;
 							break;
 						case HARD:
 							CleanLevel();
-							MakeLevel(5, 5, 5);
+							MakeLevel(10, 10, 10);
 							menu = false;
 							break;
 						case NONE:

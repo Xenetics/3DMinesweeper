@@ -205,20 +205,21 @@ void Camera::RotateY(float angle)
 
 void Camera::OrbitHorizontal(float angle)
 {
-	XMMATRIX matrixRot = XMMatrixRotationY(angle);
-	//XMMATRIX matrixTrans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-	XMMATRIX matrixFinal = matrixRot;// *matrixTrans;
-	XMStoreFloat3(&mPosition, XMVector3TransformNormal(XMLoadFloat3(&mPosition), matrixFinal));
-	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), matrixFinal));
+	XMMATRIX matrixRot = XMMatrixRotationY(angle); //add rotation to the matrix
+
+	XMStoreFloat3(&mPosition, XMVector3TransformNormal(XMLoadFloat3(&mPosition), matrixRot));
+	//XMVECTOR lookVector = XMLoadFloat3(&mPosition) - XMVectorZero();
+	//XMStoreFloat3(&mLook, lookVector);
+	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), matrixRot));
+	//XMStoreFloat3(&mUp, XMVector3TransformNormal(XMLoadFloat3(&mUp), matrixRot));
 }
 
 void Camera::OrbitVertical(float angle)
 {
 	XMMATRIX matrixRot = XMMatrixRotationX(angle);
-	//XMMATRIX matrixTrans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-	XMMATRIX matrixFinal = matrixRot;// *matrixTrans;
-	XMStoreFloat3(&mPosition, XMVector3TransformNormal(XMLoadFloat3(&mPosition), matrixFinal));
-	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), matrixFinal));
+
+	XMStoreFloat3(&mPosition, XMVector3TransformNormal(XMLoadFloat3(&mPosition), matrixRot));
+	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), matrixRot));
 }
 
 void Camera::UpdateViewMatrix()
