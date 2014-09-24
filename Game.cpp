@@ -221,7 +221,7 @@ mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), m
 	mPickedTriangleMat.Reflect	= XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	
 	//MakeLevel(5, 5, 5); //makes the cube of blocks.
-	CreateMenu();
+	
 
 	//-------------------
 	
@@ -361,7 +361,7 @@ void Game::InitTextures()
 	mSky = new Sky(md3dDevice, L"Textures/underwater.dds", 5000.0f);
 
 	//Menu Textures
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/logo.png", 0, 0, &mDiffuseMapSRVMenuButtons[0], 0)); //LOGO
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/logo2.png", 0, 0, &mDiffuseMapSRVMenuButtons[0], 0)); //LOGO
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/play.png", 0, 0, &mDiffuseMapSRVMenuButtons[1], 0)); //PLAY
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/easy.png", 0, 0, &mDiffuseMapSRVMenuButtons[2], 0)); //EASY
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/medium.png", 0, 0, &mDiffuseMapSRVMenuButtons[3], 0)); //MEDIUM
@@ -395,6 +395,7 @@ bool Game::Init()
 
 	InitFMOD();
 	InitTextures();
+	CreateMenu();
 
 	std::wstring filename = L"Textures/FireAnim/Fire";
 	for (int i = 1; i < 121; i++)
