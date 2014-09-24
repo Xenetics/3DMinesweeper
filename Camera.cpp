@@ -217,7 +217,6 @@ void Camera::OrbitHorizontal(float angle)
 void Camera::OrbitVertical(float angle)
 {
 	XMMATRIX matrixRot = XMMatrixRotationX(angle);
-
 	XMStoreFloat3(&mPosition, XMVector3TransformNormal(XMLoadFloat3(&mPosition), matrixRot));
 	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), matrixRot));
 }

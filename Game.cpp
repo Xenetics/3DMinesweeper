@@ -163,6 +163,8 @@ public:
 	bool menu = true;
 	void CleanLevel(); //cleans the level data before loading new level
 	void InitTextures();
+	void SetUpLevelData(int mines);
+	bool isLevelSet = false;
 	
 	static bool SortByVector(const Cube* lhs, const Cube* rhs) { return lhs->distanceFromCam < rhs->distanceFromCam; }
 };
@@ -230,7 +232,7 @@ mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), m
 	//XMMATRIX MeshOffset = XMMatrixTranslation(0.0f, 1.0f, 0.0f);
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixMultiply(MeshScale, MeshOffset));
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixTranslation(levelWidth*0.5f, levelLength * 0.5f, levelHeight * 0.5f));
-	mCam.SetPosition(0.0f, 0.0f, -18.0f);
+	mCam.SetPosition(0.0f, 0.0f, -15.0f);
 
 	
 }
@@ -462,21 +464,25 @@ void Game::UpdateScene(float dt)
 		{
 			//mCam.Walk(10.0f*dt);
 			mCam.OrbitVertical(2 * dt);
+			//mCam.Pitch(2 * dt);
 		}
 		if (GetAsyncKeyState('S') & 0x8000 || GetAsyncKeyState(VK_DOWN) & 0x8000)
 		{
 			//mCam.Walk(-10.0f*dt);
 			mCam.OrbitVertical(-2 * dt);
+			//mCam.Pitch(-2 * dt);
 		}
 		if (GetAsyncKeyState('A') & 0x8000 || GetAsyncKeyState(VK_LEFT) & 0x8000)
 		{
 			//mCam.Strafe(-10.0f*dt);
 			mCam.OrbitHorizontal(-2 * dt);
+			//mCam.RotateY(-2*dt);
 		}
 		if (GetAsyncKeyState('D') & 0x8000 || GetAsyncKeyState(VK_RIGHT) & 0x8000)
 		{
 			//mCam.Strafe(10.0f*dt);
 			mCam.OrbitHorizontal(2 * dt);
+			//mCam.RotateY(2 * dt);
 		}
 		//Zoom controls
 		if (GetAsyncKeyState('Q') & 0x8000)
@@ -498,7 +504,7 @@ void Game::UpdateScene(float dt)
 			}
 		}
 	}
-
+	//mCam.SetPosition(mCam.GetLook().x*1, mCam.GetLook().y*1, mCam.GetLook().z*-18);
 	if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) //exits the game
 	{
 		PostQuitMessage(0);
@@ -715,12 +721,12 @@ void Game::OnMouseDown(WPARAM btnState, int x, int y)
 		Pick(x, y);
 		
 	}
-	if (btnState == 16)
+	/*if (btnState == 16)
 	{
 		cubes.clear();
 		hasDiamond = false;
 		MakeLevel(levelWidth, levelLength, levelHeight);
-	}
+	}*/
 	result = system->playSound(FMOD_CHANNEL_FREE, sound2, false, &channel2);
 	ERRCHECK(result);
 }
@@ -817,6 +823,7 @@ void Game::BuildGeometryBuffers()
 
 void Game::MakeLevel(UINT width, UINT length, UINT height)
 {
+	CleanLevel();
 	levelWidth = width;
 	levelLength = length;
 	levelHeight = height;
@@ -859,8 +866,8 @@ void Game::MakeLevel(UINT width, UINT length, UINT height)
 		//}
 		x++;
 	}
-	cubes[rand() % cubes.size()]->texture = Cube::MINE;
-	hasDiamond = true;
+	//cubes[rand() % cubes.size()]->texture = Cube::MINE;
+	//hasDiamond = true;
 }
 
 UINT Game::SetCubeTexture(UINT cube, UINT x, UINT y, UINT z, UINT width, UINT height, UINT length)
@@ -973,17 +980,14 @@ void Game::Pick(int sx, int sy)
 						switch (diffState)
 						{
 						case EASY:
-							CleanLevel();
 							MakeLevel(6, 6, 6);
 							menu = false;
 							break;
 						case MEDIUM:
-							CleanLevel();
 							MakeLevel(8, 8, 8);
 							menu = false;
 							break;
 						case HARD:
-							CleanLevel();
 							MakeLevel(10, 10, 10);
 							menu = false;
 							break;
@@ -1022,7 +1026,17 @@ void Game::Pick(int sx, int sy)
 		if (!cubesTouched.empty())
 		{
 			std::sort(cubesTouched.begin(), cubesTouched.end(), SortByVector);
+			int size = cubes.size();
 			int place = cubesTouched[0]->uniqueID;
+			switch (cubes[place]->texture)
+			{
+			case Cube::GRAY:
+				SetUpLevelData(10);
+				break;
+			case Cube::MINE:
+				MakeLevel(levelWidth,levelHeight,levelLength);
+				break;
+			}
 			delete(cubes[place]);
 			cubes[place] = NULL;
 			//cubes.erase(cubes.begin() + place);
@@ -1199,4 +1213,21 @@ void Game::GameLighting()
 	Effects::BasicFX->SetDirLights(mDirLights);
 	Effects::BasicFX->SetPointLights(mPointLights);
 	Effects::BasicFX->SetSpotLights(mSpotLights);
+}
+
+void Game::SetUpLevelData(int mines)
+{
+	if (!isLevelSet)
+	{
+		for (int i = 0; i < mines; i++) //changes blocks values into mines for the number passes in (mines)
+		{
+			int whichBlock = rand() % cubes.size();
+			while (cubes[whichBlock]->texture == Cube::MINE)
+			{
+				whichBlock = rand() % cubes.size(); //picks a random number between 0 and size of cube array
+			}
+			cubes[whichBlock]->texture = Cube::MINE;
+		}
+		isLevelSet = true;
+	}
 }
