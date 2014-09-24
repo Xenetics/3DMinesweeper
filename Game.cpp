@@ -340,7 +340,7 @@ void Game::InitFMOD()
 	result = system->createSound("test2.ogg", FMOD_HARDWARE, 0, &sound2);
 	ERRCHECK(result);
 
-	result = system->createStream("testMusic.mp3", FMOD_HARDWARE | FMOD_LOOP_NORMAL | FMOD_2D, 0, &music);
+	result = system->createStream("music.mp3", FMOD_HARDWARE | FMOD_LOOP_NORMAL | FMOD_2D, 0, &music);
 	ERRCHECK(result);
 
 	result = system->playSound(FMOD_CHANNEL_FREE, music, false, &musicChannel);
