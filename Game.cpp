@@ -358,7 +358,7 @@ void Game::InitFMOD()
 void Game::InitTextures()
 {
 	// Skybox
-	mSky = new Sky(md3dDevice, L"Textures/nightBox.dds", 5000.0f);
+	mSky = new Sky(md3dDevice, L"Textures/underwater.dds", 5000.0f);
 
 	//Menu Textures
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/logo.png", 0, 0, &mDiffuseMapSRVMenuButtons[0], 0)); //LOGO
