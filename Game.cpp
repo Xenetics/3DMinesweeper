@@ -1024,14 +1024,17 @@ void Game::Pick(int sx, int sy)
 					case EASYb:
 						diffState = EASY;
 						IndentDiff(2);
+						cubes[2]->menuTexture = EASYbOn;
 						break;
 					case MEDIUMb:
 						diffState = MEDIUM;
 						IndentDiff(3);
+						cubes[3]->menuTexture = MEDIUMbOn;
 						break;
 					case HARDb:
 						diffState = HARD;
 						IndentDiff(4);
+						cubes[4]->menuTexture = HARDbOn;
 						break;
 					case EXITb:
 						PostQuitMessage(0);
@@ -1226,6 +1229,9 @@ void Game::IndentDiff(int index)
 		cubes[index]->pos = curPos * PushBack;
 		XMStoreFloat4x4(&cubes[index]->localWorld, XMMatrixScalingFromVector(cubes[index]->scale) * XMMatrixTranslationFromVector(cubes[index]->pos));
 	}
+	cubes[2]->menuTexture = EASYb;
+	cubes[3]->menuTexture = MEDIUMb;
+	cubes[4]->menuTexture = HARDb;
 }
 
 void Game::SetUpLevelData(int mines)
