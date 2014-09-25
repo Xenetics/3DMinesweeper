@@ -82,8 +82,8 @@ private:
 	ID3D11ShaderResourceView* mDiffuseMapSRV3[120];
 	ID3D11ShaderResourceView* mDiffuseMapSRV4;
 	ID3D11ShaderResourceView* mDiffuseMapSRV5;
-	ID3D11ShaderResourceView* mDiffuseMapSRVMenuButtons[8];
-	enum menuButtons {LOGOb,PLAYb,EASYb,MEDIUMb,HARDb,EXITb,SOUNDb,MUSICb};
+	ID3D11ShaderResourceView* mDiffuseMapSRVMenuButtons[12];
+	enum menuButtons {LOGOb,PLAYb,EASYb,EASYbOn,MEDIUMb,MEDIUMbOn,HARDb,HARDbOn,EXITb,SOUNDb,SOUNDbOff,MUSICb,MUSICbOff};
 	menuButtons button;
 
 	LPCTSTR num;
@@ -365,12 +365,17 @@ void Game::InitTextures()
 	//Menu Textures
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/logo2.png", 0, 0, &mDiffuseMapSRVMenuButtons[0], 0)); //LOGO
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/play.png", 0, 0, &mDiffuseMapSRVMenuButtons[1], 0)); //PLAY
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/easy.png", 0, 0, &mDiffuseMapSRVMenuButtons[2], 0)); //EASY
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/medium.png", 0, 0, &mDiffuseMapSRVMenuButtons[3], 0)); //MEDIUM
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/hard.png", 0, 0, &mDiffuseMapSRVMenuButtons[4], 0)); //HARD
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/exit.png", 0, 0, &mDiffuseMapSRVMenuButtons[5], 0)); //EXIT
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/soundfx.png", 0, 0, &mDiffuseMapSRVMenuButtons[6], 0)); //SOUND
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/music.png", 0, 0, &mDiffuseMapSRVMenuButtons[7], 0)); //MUSIC
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/easypicked.png", 0, 0, &mDiffuseMapSRVMenuButtons[2], 0)); //EASY
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/easyselected.png", 0, 0, &mDiffuseMapSRVMenuButtons[3], 0)); //EASY
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/mediumnot.png", 0, 0, &mDiffuseMapSRVMenuButtons[4], 0)); //MEDIUM
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/mediumselected.png", 0, 0, &mDiffuseMapSRVMenuButtons[5], 0)); //MEDIUM
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/hardnot.png", 0, 0, &mDiffuseMapSRVMenuButtons[6], 0)); //HARD
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/hardselected.png", 0, 0, &mDiffuseMapSRVMenuButtons[7], 0)); //HARD
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/exit.png", 0, 0, &mDiffuseMapSRVMenuButtons[8], 0)); //EXIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/soundfxon.png", 0, 0, &mDiffuseMapSRVMenuButtons[9], 0)); //SOUND
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/soundfxoff.png", 0, 0, &mDiffuseMapSRVMenuButtons[10], 0)); //SOUND
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/musicon.png", 0, 0, &mDiffuseMapSRVMenuButtons[11], 0)); //MUSIC
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/musicoff.png", 0, 0, &mDiffuseMapSRVMenuButtons[12], 0)); //MUSIC
 
 	//Game Textures
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
@@ -662,20 +667,35 @@ void Game::DrawScene()
 					case EASYb:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[2]);
 						break;
-					case MEDIUMb:
+					case EASYbOn:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[3]);
 						break;
-					case HARDb:
+					case MEDIUMb:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[4]);
 						break;
-					case EXITb:
+					case MEDIUMbOn:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[5]);
 						break;
-					case SOUNDb:
+					case HARDb:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[6]);
 						break;
-					case MUSICb:
+					case HARDbOn:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[7]);
+						break;
+					case EXITb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[8]);
+						break;
+					case SOUNDb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[9]);
+						break;
+					case SOUNDbOff:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[10]);
+						break;
+					case MUSICb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[11]);
+						break;
+					case MUSICbOff:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[12]);
 						break;
 					}
 					activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
