@@ -33,6 +33,8 @@
 struct Cube
 {
 	XMVECTOR pos;
+	XMVECTOR originPos;
+	XMVECTOR scale;
 	enum cubeTextures {EMPTY,GRAY,MINE,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,TEN};
 	cubeTextures texture = GRAY;
 	UINT menuTexture;
@@ -90,8 +92,6 @@ private:
 
 	// Lighting variables
 	DirectionalLight mDirLights[2];
-	PointLight mPointLights[1];
-	SpotLight mSpotLights[1];
 
 	// Material variables
 	Material mBoxMat;
@@ -166,6 +166,10 @@ public:
 	void SetUpLevelData(int mines);
 	bool isLevelSet = false;
 	
+	XMVECTOR curPos;
+	XMVECTOR PushBack = XMVectorSet(1.0f, 1.0f, 1.1f, 1.0f); // used for moving the buttons on press
+	void IndentDiff(int index);
+
 	static bool SortByVector(const Cube* lhs, const Cube* rhs) { return lhs->distanceFromCam < rhs->distanceFromCam; }
 };
 
@@ -982,7 +986,7 @@ void Game::Pick(int sx, int sy)
 			}
 		}
 	}
-
+	
 	if (menu)
 	{
 		if (!cubesTouched.empty())
@@ -1019,12 +1023,15 @@ void Game::Pick(int sx, int sy)
 						break;
 					case EASYb:
 						diffState = EASY;
+						IndentDiff(2);
 						break;
 					case MEDIUMb:
 						diffState = MEDIUM;
+						IndentDiff(3);
 						break;
 					case HARDb:
 						diffState = HARD;
+						IndentDiff(4);
 						break;
 					case EXITb:
 						PostQuitMessage(0);
@@ -1069,8 +1076,9 @@ void Game::CreateMenu()
 	// LOGO
 	Cube * logoButton = new Cube; //creates new block
 	logoButton->pos = XMVectorSet(0, 6, 5, 1); //set the position in world space for the cube
-	XMMATRIX logoBoxScale = XMMatrixScaling(20.0f, 2.0f, 1.0f); //set the scale of the button
-	XMStoreFloat4x4(&logoButton->localWorld, XMMatrixMultiply(logoBoxScale, XMMatrixTranslationFromVector(logoButton->pos)));
+	logoButton->originPos = XMVectorSet(0, 6, 5, 1); //set its origin pos for button presses
+	logoButton->scale = XMVectorSet(20.0f, 2.0f, 1.0f, 1.0f); //set the scale of the button
+	XMStoreFloat4x4(&logoButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(logoButton->scale), XMMatrixTranslationFromVector(logoButton->pos)));
 	XMStoreFloat3(&logoButton->mMeshBox.Center, logoButton->pos); //sets the center of the mesh box for click detection
 	XMVECTOR logoHalfSize = XMVectorSet(10.0f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
 	XMStoreFloat3(&logoButton->mMeshBox.Extents, logoHalfSize);
@@ -1079,22 +1087,24 @@ void Game::CreateMenu()
 	Game::cubes.push_back(logoButton); //adds the play button to the array of cubes to draw
 
 	//PLAY BUTTON
-	Cube * playButton = new Cube; //creates new block
-	playButton->pos = XMVectorSet(0, -1, 5, 1); //set the position in world space for the cube
-	XMMATRIX boxScale = XMMatrixScaling(10.0f, 2.0f, 1.0f); //set the scale of the button
-	XMStoreFloat4x4(&playButton->localWorld, XMMatrixMultiply(boxScale, XMMatrixTranslationFromVector(playButton->pos)));
-	XMStoreFloat3(&playButton->mMeshBox.Center, playButton->pos); //sets the center of the mesh box for click detection
-	XMVECTOR halfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
+	Cube * playButton = new Cube;
+	playButton->pos = XMVectorSet(0, -1, 5, 1);
+	playButton->originPos = XMVectorSet(0, -1, 5, 1);
+	playButton->scale = XMVectorSet(10.0f, 2.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&playButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(playButton->scale), XMMatrixTranslationFromVector(playButton->pos)));
+	XMStoreFloat3(&playButton->mMeshBox.Center, playButton->pos);
+	XMVECTOR halfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f);
 	XMStoreFloat3(&playButton->mMeshBox.Extents, halfSize);
-	playButton->menuTexture = PLAYb; //sets the texture of button; 
-	playButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
-	Game::cubes.push_back(playButton); //adds the play button to the array of cubes to draw
+	playButton->menuTexture = PLAYb; 
+	playButton->isMenu = true;
+	Game::cubes.push_back(playButton); 
 
 	// EASY BUTTON
 	Cube * easyButton = new Cube;
 	easyButton->pos = XMVectorSet(-7, 3, 5, 1);
-	XMMATRIX eboxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
-	XMStoreFloat4x4(&easyButton->localWorld, XMMatrixMultiply(eboxScale, XMMatrixTranslationFromVector(easyButton->pos)));
+	easyButton->originPos = XMVectorSet(-7, 3, 5, 1);
+	easyButton->scale = XMVectorSet(6.0f, 1.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&easyButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(easyButton->scale), XMMatrixTranslationFromVector(easyButton->pos)));
 	XMStoreFloat3(&easyButton->mMeshBox.Center, easyButton->pos);
 	XMVECTOR ehalfSize = XMVectorSet(3.0f, 0.5f, 0.5f, 1.5f);
 	XMStoreFloat3(&easyButton->mMeshBox.Extents, ehalfSize);
@@ -1105,8 +1115,9 @@ void Game::CreateMenu()
 	//MEDIUM BUTTON
 	Cube * midButton = new Cube;
 	midButton->pos = XMVectorSet(0, 3, 5, 1);
-	XMMATRIX midboxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
-	XMStoreFloat4x4(&midButton->localWorld, XMMatrixMultiply(midboxScale, XMMatrixTranslationFromVector(midButton->pos)));
+	midButton->originPos = XMVectorSet(0, 3, 5, 1);
+	midButton->scale = XMVectorSet(6.0f, 1.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&midButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(midButton->scale), XMMatrixTranslationFromVector(midButton->pos)));
 	XMStoreFloat3(&midButton->mMeshBox.Center, midButton->pos);
 	XMVECTOR midHalfSize = XMVectorSet(3.0f, 0.5f, 0.5f, 1.5f);
 	XMStoreFloat3(&midButton->mMeshBox.Extents, midHalfSize);
@@ -1117,8 +1128,9 @@ void Game::CreateMenu()
 	//HARD BUTTON
 	Cube * hardButton = new Cube;
 	hardButton->pos = XMVectorSet(7, 3, 5, 1);
-	XMMATRIX hBoxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
-	XMStoreFloat4x4(&hardButton->localWorld, XMMatrixMultiply(hBoxScale, XMMatrixTranslationFromVector(hardButton->pos)));
+	hardButton->originPos = XMVectorSet(7, 3, 5, 1);
+	hardButton->scale = XMVectorSet(6.0f, 1.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&hardButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(hardButton->scale), XMMatrixTranslationFromVector(hardButton->pos)));
 	XMStoreFloat3(&hardButton->mMeshBox.Center, hardButton->pos);
 	XMVECTOR hardHalfSize = XMVectorSet(3.0f, 0.5f, 0.5f, 1.0f);
 	XMStoreFloat3(&hardButton->mMeshBox.Extents, hardHalfSize);
@@ -1129,8 +1141,9 @@ void Game::CreateMenu()
 	//EXIT BUTTON
 	Cube * exitButton = new Cube;
 	exitButton->pos = XMVectorSet(9, -7, 5, 1);
-	XMMATRIX exBoxScale = XMMatrixScaling(2.0f, 1.0f, 1.0f);
-	XMStoreFloat4x4(&exitButton->localWorld, XMMatrixMultiply(exBoxScale, XMMatrixTranslationFromVector(exitButton->pos)));
+	exitButton->originPos = XMVectorSet(9, -7, 5, 1);
+	exitButton->scale = XMVectorSet(2.0f, 1.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&exitButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(exitButton->scale), XMMatrixTranslationFromVector(exitButton->pos)));
 	XMStoreFloat3(&exitButton->mMeshBox.Center, exitButton->pos);
 	XMVECTOR exitHalfSize = XMVectorSet(1.0f, 0.5f, 0.5f, 1.0f);
 	XMStoreFloat3(&exitButton->mMeshBox.Extents, exitHalfSize);
@@ -1141,8 +1154,9 @@ void Game::CreateMenu()
 	//SOUND TOGGLE
 	Cube * soundButton = new Cube;
 	soundButton->pos = XMVectorSet(-8, -5, 5, 1);
-	XMMATRIX sBoxScale = XMMatrixScaling(4.0f, 1.0f, 1.0f);
-	XMStoreFloat4x4(&soundButton->localWorld, XMMatrixMultiply(sBoxScale, XMMatrixTranslationFromVector(soundButton->pos)));
+	soundButton->originPos = XMVectorSet(-8, -5, 5, 1);
+	soundButton->scale = XMVectorSet(4.0f, 1.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&soundButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(soundButton->scale), XMMatrixTranslationFromVector(soundButton->pos)));
 	XMStoreFloat3(&soundButton->mMeshBox.Center, soundButton->pos);
 	XMVECTOR sHalfSize = XMVectorSet(2.0f, 0.5f, 0.5f, 1.0f);
 	XMStoreFloat3(&soundButton->mMeshBox.Extents, sHalfSize);
@@ -1153,8 +1167,9 @@ void Game::CreateMenu()
 	//MUSIC TOGGLE
 	Cube * musicButton = new Cube;
 	musicButton->pos = XMVectorSet(-8, -7, 5, 1);
-	XMMATRIX musicBoxScale = XMMatrixScaling(4.0f, 1.0f, 1.0f);
-	XMStoreFloat4x4(&musicButton->localWorld, XMMatrixMultiply(musicBoxScale, XMMatrixTranslationFromVector(musicButton->pos)));
+	musicButton->originPos = XMVectorSet(-8, -7, 5, 1);
+	musicButton->scale = XMVectorSet(4.0f, 1.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&musicButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(musicButton->scale), XMMatrixTranslationFromVector(musicButton->pos)));
 	XMStoreFloat3(&musicButton->mMeshBox.Center, musicButton->pos);
 	XMVECTOR musicHalfSize = XMVectorSet(2.0f, 0.5f, 0.5f, 1.0f);
 	XMStoreFloat3(&musicButton->mMeshBox.Extents, musicHalfSize);
@@ -1170,10 +1185,9 @@ void Game::CleanLevel()
 
 void Game::MenuLighting()
 {
-	
-	mDirLights[0].Ambient = XMFLOAT4(0.05f, 0.05f, 0.05f, 1.0f);
-	mDirLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	mDirLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
+	mDirLights[0].Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	mDirLights[0].Diffuse = XMFLOAT4(0.9f, 0.9f, 0.9f, 1.0f);
+	mDirLights[0].Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
 	mDirLights[0].Direction = XMFLOAT3(0.0f, 0.0f, 0.7f);
 
 	mDirLights[1].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -1181,25 +1195,7 @@ void Game::MenuLighting()
 	mDirLights[1].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	mDirLights[1].Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	
-	mPointLights[0].Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
-	mPointLights[0].Diffuse = XMFLOAT4(0.9f, 0.9f, 0.9f, 1.0f);
-	mPointLights[0].Specular = XMFLOAT4(0.7f, 0.7f, 0.7f, 16.0f);
-	mPointLights[0].Att = XMFLOAT3(0.4f, 0.4f, 1.0f);
-	mPointLights[0].Position = XMFLOAT3(0.0f, -1.0f, 4.75f);
-	mPointLights[0].Range = 5.0f;
-	/*
-	mSpotLights[0].Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
-	mSpotLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	mSpotLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
-	mSpotLights[0].Position = XMFLOAT3(-7.0f, 3.0f, -10.0f);
-	mSpotLights[0].Direction = XMFLOAT3(-7.0f, 3.0f, 5.0f);
-	mSpotLights[0].Att = XMFLOAT3(0.4f, 0.4f, 1.0f);
-	mSpotLights[0].Spot = 1.0f;
-	mSpotLights[0].Range = 20.0f;
-	*/
 	Effects::BasicFX->SetDirLights(mDirLights);
-	Effects::BasicFX->SetPointLights(mPointLights);
-	//Effects::BasicFX->SetSpotLights(mSpotLights);
 }
 
 void Game::GameLighting()
@@ -1214,25 +1210,22 @@ void Game::GameLighting()
 	mDirLights[1].Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 16.0f);
 	mDirLights[1].Direction = XMFLOAT3(-0.707f, 0.0f, 0.707f);
 
-	mPointLights[0].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-	mPointLights[0].Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-	mPointLights[0].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-	mPointLights[0].Att = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	mPointLights[0].Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	mPointLights[0].Range = 0.0f;
-
-	mSpotLights[0].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	mSpotLights[0].Diffuse = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
-	mSpotLights[0].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	mSpotLights[0].Position = XMFLOAT3(-7.0f, 3.0f, 0.0f);
-	mSpotLights[0].Direction = XMFLOAT3(-7.0f, 3.0f, 3.0f);
-	mSpotLights[0].Att = XMFLOAT3(0.4f, 0.2f, 1.0f);
-	mSpotLights[0].Spot = 0.3f;
-	mSpotLights[0].Range = 10.0f;
-
 	Effects::BasicFX->SetDirLights(mDirLights);
-	Effects::BasicFX->SetPointLights(mPointLights);
-	Effects::BasicFX->SetSpotLights(mSpotLights);
+}
+
+void Game::IndentDiff(int index)
+{
+	if (!AreSameVec(cubes[index]->pos, cubes[index]->originPos * PushBack))
+	{
+		for (int i = 2; i < 5; ++i)
+		{
+			cubes[i]->pos = cubes[i]->originPos;
+			XMStoreFloat4x4(&cubes[i]->localWorld, XMMatrixScalingFromVector(cubes[i]->scale) * XMMatrixTranslationFromVector(cubes[i]->pos));
+		}
+		curPos = cubes[index]->pos;
+		cubes[index]->pos = curPos * PushBack;
+		XMStoreFloat4x4(&cubes[index]->localWorld, XMMatrixScalingFromVector(cubes[index]->scale) * XMMatrixTranslationFromVector(cubes[index]->pos));
+	}
 }
 
 void Game::SetUpLevelData(int mines)

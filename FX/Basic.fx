@@ -9,8 +9,6 @@
 cbuffer cbPerFrame
 {
 	DirectionalLight gDirLights[2];
-	SpotLight gSpotLights[1];
-	PointLight gPointLights[1];
 	float3 gEyePosW;
 
 	float  gFogStart;
@@ -116,17 +114,6 @@ float4 PS(VertexOut pin, uniform int gLightCount, uniform bool gUseTexure, unifo
 
 		// Sum the light contribution from each light source.  
 		float4 A, D, S;
-
-		ComputeSpotLight(gMaterial, gSpotLights[i], pin.PosW, pin.NormalW, toEye, A, D, S);
-		ambient += A;
-		diffuse += D;
-		spec += S;
-		/*
-		ComputePointLight(gMaterial, gPointLights[0], pin.PosW, pin.NormalW, toEye, A, D, S);
-		ambient += A;
-		diffuse += D;
-		spec += S;
-		*/
 		[unroll]
 		for (int i = 0; i < 2; ++i)
 		{
