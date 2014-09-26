@@ -748,16 +748,8 @@ void Game::OnMouseDown(WPARAM btnState, int x, int y)
 		Pick(x, y);
 		
 	}
-	/*if (btnState == 16)
-	{
-		cubes.clear();
-		hasDiamond = false;
-		MakeLevel(levelWidth, levelLength, levelHeight);
-<<<<<<< HEAD
-	}
-	
-=======
-	}*/
+
+}
 
 void Game::OnMouseUp(WPARAM btnState, int x, int y)
 {
@@ -1275,19 +1267,17 @@ int Game::CheckBlockSides(int placeInArray)
 	}
 	cubesChecked.push_back(cubes[placeInArray]->uniqueID);
 	
-	
-	
 	//make counter for number of mines
 	//int q = (36 / 35) + 1; 
 	int layerArea = levelWidth * levelLength;
 	int cubeVolume = levelWidth * levelLength * levelHeight;
 	int layer;
 	int temp;
-	/*
+	
 	//check left
 	int left = placeInArray - 1;
 	if (left >= 0 &&
-		left % levelWidth != 0 &&
+		//left % levelWidth != 0 &&
 		cubes[left] != NULL)
 	{
 		if (cubes[left]->texture == Cube::MINE)
@@ -1304,7 +1294,7 @@ int Game::CheckBlockSides(int placeInArray)
 	//check right
 	int right = placeInArray + 1;
 	if (right < cubeVolume &&
-		right % levelWidth != levelWidth - 1 &&
+		//right % levelWidth != levelWidth - 1 &&
 		cubes[right] != NULL)
 	{
 		if (cubes[right]->texture == Cube::MINE)
@@ -1315,14 +1305,14 @@ int Game::CheckBlockSides(int placeInArray)
 		{
 			CheckBlockSides(right);
 		}
-	}*/
+	}
 
 	//check forward
 	int forward = placeInArray + levelWidth;
 	layer = (forward / layerArea) + 1;
-	temp = (forward - ((layerArea * layer) - 1)) - levelWidth; //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
+	temp = (forward - ((layerArea * layer) - 1)); //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
 	if (forward < cubeVolume - levelWidth &&
-//temp >= -((layerArea / levelWidth)) + 1 && CHECK THIS
+	//temp <= -((layerArea / levelWidth)) + 1 &&
 		cubes[forward] != NULL) //is not in top row)
 	{
 		if (cubes[forward]->texture == Cube::MINE)
@@ -1338,14 +1328,14 @@ int Game::CheckBlockSides(int placeInArray)
 	//check backward
 	int back = placeInArray - levelWidth;
 	layer = (back / layerArea) + 1;
-	temp = (back - (layerArea * layer - 1)) - levelWidth; //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
+	temp = (back - (layerArea * layer - 1)) + levelWidth; //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
 	if (back >= 0 &&
-		temp <= -(layerArea)-levelWidth &&
-		cubes[back] != NULL)
+		//temp <= -(layerArea)-levelWidth &&
+		cubes[back] != NULL) //this if is never true
 	{
 		if (cubes[back]->texture == Cube::MINE)
 		{
-			return 0;
+			return 0; 
 		}
 		else
 		{
