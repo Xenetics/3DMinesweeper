@@ -264,8 +264,8 @@ Game::~Game()
 	InputLayouts::DestroyAll();
 
 	//Clean up FMOD
-	result = sound2->release();
-	ERRCHECK(result);
+	//result = sound2->release();
+	//ERRCHECK(result);
 	result = music->release();
 	ERRCHECK(result);
 	result = system->close();
@@ -346,8 +346,8 @@ void Game::InitFMOD()
 	}
 	ERRCHECK(result);
 
-	result = system->createSound("test2.ogg", FMOD_HARDWARE, 0, &sound2);
-	ERRCHECK(result);
+	//result = system->createSound("test2.ogg", FMOD_HARDWARE, 0, &sound2);
+	//ERRCHECK(result);
 
 	result = system->createStream("music.mp3", FMOD_HARDWARE | FMOD_LOOP_NORMAL | FMOD_2D, 0, &music);
 	ERRCHECK(result);
