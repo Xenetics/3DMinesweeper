@@ -745,16 +745,8 @@ void Game::OnMouseDown(WPARAM btnState, int x, int y)
 		Pick(x, y);
 		
 	}
-	/*if (btnState == 16)
-	{
-		cubes.clear();
-		hasDiamond = false;
-		MakeLevel(levelWidth, levelLength, levelHeight);
-<<<<<<< HEAD
-	}
 	
-=======
-	}*/
+}
 
 void Game::OnMouseUp(WPARAM btnState, int x, int y)
 {
