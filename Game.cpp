@@ -33,6 +33,8 @@
 struct Cube
 {
 	XMVECTOR pos;
+	XMVECTOR originPos;
+	XMVECTOR scale;
 	enum cubeTextures {EMPTY,GRAY,MINE,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,TEN};
 	cubeTextures texture = GRAY;
 	UINT menuTexture;
@@ -82,16 +84,14 @@ private:
 	ID3D11ShaderResourceView* mDiffuseMapSRV3[120];
 	ID3D11ShaderResourceView* mDiffuseMapSRV4;
 	ID3D11ShaderResourceView* mDiffuseMapSRV5;
-	ID3D11ShaderResourceView* mDiffuseMapSRVMenuButtons[8];
-	enum menuButtons {LOGOb,PLAYb,EASYb,MEDIUMb,HARDb,EXITb,SOUNDb,MUSICb};
+	ID3D11ShaderResourceView* mDiffuseMapSRVMenuButtons[12];
+	enum menuButtons {LOGOb,PLAYb,EASYb,EASYbOn,MEDIUMb,MEDIUMbOn,HARDb,HARDbOn,EXITb,SOUNDb,SOUNDbOff,MUSICb,MUSICbOff};
 	menuButtons button;
 
 	LPCTSTR num;
 
 	// Lighting variables
 	DirectionalLight mDirLights[2];
-	PointLight mPointLights[1];
-	SpotLight mSpotLights[1];
 
 	// Material variables
 	Material mBoxMat;
@@ -163,7 +163,13 @@ public:
 	bool menu = true;
 	void CleanLevel(); //cleans the level data before loading new level
 	void InitTextures();
+	void SetUpLevelData(int mines);
+	bool isLevelSet = false;
 	
+	XMVECTOR curPos;
+	XMVECTOR PushBack = XMVectorSet(1.0f, 1.0f, 1.1f, 1.0f); // used for moving the buttons on press
+	void IndentDiff(int index);
+
 	static bool SortByVector(const Cube* lhs, const Cube* rhs) { return lhs->distanceFromCam < rhs->distanceFromCam; }
 };
 
@@ -221,7 +227,7 @@ mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), m
 	mPickedTriangleMat.Reflect	= XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	
 	//MakeLevel(5, 5, 5); //makes the cube of blocks.
-	CreateMenu();
+	
 
 	//-------------------
 	
@@ -361,14 +367,19 @@ void Game::InitTextures()
 	mSky = new Sky(md3dDevice, L"Textures/underwater.dds", 5000.0f);
 
 	//Menu Textures
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/logo.png", 0, 0, &mDiffuseMapSRVMenuButtons[0], 0)); //LOGO
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/logo2.png", 0, 0, &mDiffuseMapSRVMenuButtons[0], 0)); //LOGO
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/play.png", 0, 0, &mDiffuseMapSRVMenuButtons[1], 0)); //PLAY
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/easy.png", 0, 0, &mDiffuseMapSRVMenuButtons[2], 0)); //EASY
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/medium.png", 0, 0, &mDiffuseMapSRVMenuButtons[3], 0)); //MEDIUM
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/hard.png", 0, 0, &mDiffuseMapSRVMenuButtons[4], 0)); //HARD
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/exit.png", 0, 0, &mDiffuseMapSRVMenuButtons[5], 0)); //EXIT
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/soundfx.png", 0, 0, &mDiffuseMapSRVMenuButtons[6], 0)); //SOUND
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/music.png", 0, 0, &mDiffuseMapSRVMenuButtons[7], 0)); //MUSIC
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/easypicked.png", 0, 0, &mDiffuseMapSRVMenuButtons[2], 0)); //EASY
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/easyselected.png", 0, 0, &mDiffuseMapSRVMenuButtons[3], 0)); //EASY
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/mediumnot.png", 0, 0, &mDiffuseMapSRVMenuButtons[4], 0)); //MEDIUM
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/mediumselected.png", 0, 0, &mDiffuseMapSRVMenuButtons[5], 0)); //MEDIUM
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/hardnot.png", 0, 0, &mDiffuseMapSRVMenuButtons[6], 0)); //HARD
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/hardselected.png", 0, 0, &mDiffuseMapSRVMenuButtons[7], 0)); //HARD
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/exit.png", 0, 0, &mDiffuseMapSRVMenuButtons[8], 0)); //EXIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/soundfxon.png", 0, 0, &mDiffuseMapSRVMenuButtons[9], 0)); //SOUND
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/soundfxoff.png", 0, 0, &mDiffuseMapSRVMenuButtons[10], 0)); //SOUND
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/musicon.png", 0, 0, &mDiffuseMapSRVMenuButtons[11], 0)); //MUSIC
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/musicoff.png", 0, 0, &mDiffuseMapSRVMenuButtons[12], 0)); //MUSIC
 
 	//Game Textures
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
@@ -395,6 +406,7 @@ bool Game::Init()
 
 	InitFMOD();
 	InitTextures();
+	CreateMenu();
 
 	std::wstring filename = L"Textures/FireAnim/Fire";
 	for (int i = 1; i < 121; i++)
@@ -460,34 +472,48 @@ void Game::UpdateScene(float dt)
 		if (GetAsyncKeyState('W') & 0x8000 || GetAsyncKeyState(VK_UP) & 0x8000)
 		{
 			//mCam.Walk(10.0f*dt);
-			mCam.OrbitVertical(1 * dt);
+			mCam.OrbitVertical(2 * dt);
+			//mCam.Pitch(2 * dt);
 		}
 		if (GetAsyncKeyState('S') & 0x8000 || GetAsyncKeyState(VK_DOWN) & 0x8000)
 		{
 			//mCam.Walk(-10.0f*dt);
-			mCam.OrbitVertical(-1 * dt);
+			mCam.OrbitVertical(-2 * dt);
+			//mCam.Pitch(-2 * dt);
 		}
 		if (GetAsyncKeyState('A') & 0x8000 || GetAsyncKeyState(VK_LEFT) & 0x8000)
 		{
 			//mCam.Strafe(-10.0f*dt);
-			mCam.OrbitHorizontal(-1 * dt);
+			mCam.OrbitHorizontal(-2 * dt);
+			//mCam.RotateY(-2*dt);
 		}
 		if (GetAsyncKeyState('D') & 0x8000 || GetAsyncKeyState(VK_RIGHT) & 0x8000)
 		{
 			//mCam.Strafe(10.0f*dt);
-			mCam.OrbitHorizontal(1 * dt);
+			mCam.OrbitHorizontal(2 * dt);
+			//mCam.RotateY(2 * dt);
 		}
-
+		//Zoom controls
 		if (GetAsyncKeyState('Q') & 0x8000)
 		{
-			mCam.Walk(10.0f*dt);
+			XMVECTOR distance = XMVector3Length(mCam.GetPositionXM() - XMVectorZero());
+			float length = XMVectorGetByIndex(distance, 1);
+			if (length > 5) 
+			{
+				mCam.Walk(10*dt);
+			}
 		}
 		if (GetAsyncKeyState('E') & 0x8000)
 		{
-			mCam.Walk(-10.0f*dt);
+			XMVECTOR distance = XMVector3Length(mCam.GetPositionXM() - XMVectorZero());
+			float length = XMVectorGetByIndex(distance, 1);
+			if (length < 30)
+			{
+				mCam.Walk(-10*dt);
+			}
 		}
 	}
-
+	//mCam.SetPosition(mCam.GetLook().x*1, mCam.GetLook().y*1, mCam.GetLook().z*-18);
 	if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) //exits the game
 	{
 		PostQuitMessage(0);
@@ -645,20 +671,35 @@ void Game::DrawScene()
 					case EASYb:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[2]);
 						break;
-					case MEDIUMb:
+					case EASYbOn:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[3]);
 						break;
-					case HARDb:
+					case MEDIUMb:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[4]);
 						break;
-					case EXITb:
+					case MEDIUMbOn:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[5]);
 						break;
-					case SOUNDb:
+					case HARDb:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[6]);
 						break;
-					case MUSICb:
+					case HARDbOn:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[7]);
+						break;
+					case EXITb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[8]);
+						break;
+					case SOUNDb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[9]);
+						break;
+					case SOUNDbOff:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[10]);
+						break;
+					case MUSICb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[11]);
+						break;
+					case MUSICbOff:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[12]);
 						break;
 					}
 					activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
@@ -704,14 +745,16 @@ void Game::OnMouseDown(WPARAM btnState, int x, int y)
 		Pick(x, y);
 		
 	}
-	if (btnState == 16)
+	/*if (btnState == 16)
 	{
 		cubes.clear();
 		hasDiamond = false;
 		MakeLevel(levelWidth, levelLength, levelHeight);
+<<<<<<< HEAD
 	}
 	
-}
+=======
+	}*/
 
 void Game::OnMouseUp(WPARAM btnState, int x, int y)
 {
@@ -805,6 +848,7 @@ void Game::BuildGeometryBuffers()
 
 void Game::MakeLevel(UINT width, UINT length, UINT height)
 {
+	CleanLevel();
 	levelWidth = width;
 	levelLength = length;
 	levelHeight = height;
@@ -838,7 +882,7 @@ void Game::MakeLevel(UINT width, UINT length, UINT height)
 		else
 		{*/
 			c->texture = Cube::GRAY;
-			c->pos = XMVectorSet(x, y, z, 1);
+			c->pos = XMVectorSet(x-(width*0.5f)+0.5f, y-(height*0.5f)+0.5f, z-(length*0.5f)+0.5f, 1);
 			c->uniqueID = i;
 			XMStoreFloat3(&c->mMeshBox.Center, c->pos);
 			XMVECTOR halfSize = XMVectorSet(0.5f, 0.5f, 0.5f, 1.0f);
@@ -847,8 +891,8 @@ void Game::MakeLevel(UINT width, UINT length, UINT height)
 		//}
 		x++;
 	}
-	cubes[rand() % cubes.size()]->texture = Cube::MINE;
-	hasDiamond = true;
+	//cubes[rand() % cubes.size()]->texture = Cube::MINE;
+	//hasDiamond = true;
 }
 
 UINT Game::SetCubeTexture(UINT cube, UINT x, UINT y, UINT z, UINT width, UINT height, UINT length)
@@ -943,7 +987,7 @@ void Game::Pick(int sx, int sy)
 			}
 		}
 	}
-
+	
 	if (menu)
 	{
 		if (!cubesTouched.empty())
@@ -961,18 +1005,15 @@ void Game::Pick(int sx, int sy)
 						switch (diffState)
 						{
 						case EASY:
-							CleanLevel();
-							MakeLevel(3, 3, 3);
+							MakeLevel(6, 6, 6);
 							menu = false;
 							break;
 						case MEDIUM:
-							CleanLevel();
-							MakeLevel(4, 4, 4);
+							MakeLevel(8, 8, 8);
 							menu = false;
 							break;
 						case HARD:
-							CleanLevel();
-							MakeLevel(5, 5, 5);
+							MakeLevel(10, 10, 10);
 							menu = false;
 							break;
 						case NONE:
@@ -983,12 +1024,18 @@ void Game::Pick(int sx, int sy)
 						break;
 					case EASYb:
 						diffState = EASY;
+						IndentDiff(2);
+						cubes[2]->menuTexture = EASYbOn;
 						break;
 					case MEDIUMb:
 						diffState = MEDIUM;
+						IndentDiff(3);
+						cubes[3]->menuTexture = MEDIUMbOn;
 						break;
 					case HARDb:
 						diffState = HARD;
+						IndentDiff(4);
+						cubes[4]->menuTexture = HARDbOn;
 						break;
 					case EXITb:
 						PostQuitMessage(0);
@@ -1010,7 +1057,17 @@ void Game::Pick(int sx, int sy)
 		if (!cubesTouched.empty())
 		{
 			std::sort(cubesTouched.begin(), cubesTouched.end(), SortByVector);
+			int size = cubes.size();
 			int place = cubesTouched[0]->uniqueID;
+			switch (cubes[place]->texture)
+			{
+			case Cube::GRAY:
+				SetUpLevelData(10);
+				break;
+			case Cube::MINE:
+				MakeLevel(levelWidth,levelHeight,levelLength);
+				break;
+			}
 			delete(cubes[place]);
 			cubes[place] = NULL;
 			//cubes.erase(cubes.begin() + place);
@@ -1023,8 +1080,9 @@ void Game::CreateMenu()
 	// LOGO
 	Cube * logoButton = new Cube; //creates new block
 	logoButton->pos = XMVectorSet(0, 6, 5, 1); //set the position in world space for the cube
-	XMMATRIX logoBoxScale = XMMatrixScaling(20.0f, 2.0f, 1.0f); //set the scale of the button
-	XMStoreFloat4x4(&logoButton->localWorld, XMMatrixMultiply(logoBoxScale, XMMatrixTranslationFromVector(logoButton->pos)));
+	logoButton->originPos = XMVectorSet(0, 6, 5, 1); //set its origin pos for button presses
+	logoButton->scale = XMVectorSet(20.0f, 2.0f, 1.0f, 1.0f); //set the scale of the button
+	XMStoreFloat4x4(&logoButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(logoButton->scale), XMMatrixTranslationFromVector(logoButton->pos)));
 	XMStoreFloat3(&logoButton->mMeshBox.Center, logoButton->pos); //sets the center of the mesh box for click detection
 	XMVECTOR logoHalfSize = XMVectorSet(10.0f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
 	XMStoreFloat3(&logoButton->mMeshBox.Extents, logoHalfSize);
@@ -1033,22 +1091,24 @@ void Game::CreateMenu()
 	Game::cubes.push_back(logoButton); //adds the play button to the array of cubes to draw
 
 	//PLAY BUTTON
-	Cube * playButton = new Cube; //creates new block
-	playButton->pos = XMVectorSet(0, -1, 5, 1); //set the position in world space for the cube
-	XMMATRIX boxScale = XMMatrixScaling(10.0f, 2.0f, 1.0f); //set the scale of the button
-	XMStoreFloat4x4(&playButton->localWorld, XMMatrixMultiply(boxScale, XMMatrixTranslationFromVector(playButton->pos)));
-	XMStoreFloat3(&playButton->mMeshBox.Center, playButton->pos); //sets the center of the mesh box for click detection
-	XMVECTOR halfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f); // sets the size of the bounding box from the center of the object
+	Cube * playButton = new Cube;
+	playButton->pos = XMVectorSet(0, -1, 5, 1);
+	playButton->originPos = XMVectorSet(0, -1, 5, 1);
+	playButton->scale = XMVectorSet(10.0f, 2.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&playButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(playButton->scale), XMMatrixTranslationFromVector(playButton->pos)));
+	XMStoreFloat3(&playButton->mMeshBox.Center, playButton->pos);
+	XMVECTOR halfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f);
 	XMStoreFloat3(&playButton->mMeshBox.Extents, halfSize);
-	playButton->menuTexture = PLAYb; //sets the texture of button; 
-	playButton->isMenu = true; //tells the game this is a menu block, not a game block. (wont be destroyed when clicked)
-	Game::cubes.push_back(playButton); //adds the play button to the array of cubes to draw
+	playButton->menuTexture = PLAYb; 
+	playButton->isMenu = true;
+	Game::cubes.push_back(playButton); 
 
 	// EASY BUTTON
 	Cube * easyButton = new Cube;
 	easyButton->pos = XMVectorSet(-7, 3, 5, 1);
-	XMMATRIX eboxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
-	XMStoreFloat4x4(&easyButton->localWorld, XMMatrixMultiply(eboxScale, XMMatrixTranslationFromVector(easyButton->pos)));
+	easyButton->originPos = XMVectorSet(-7, 3, 5, 1);
+	easyButton->scale = XMVectorSet(6.0f, 1.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&easyButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(easyButton->scale), XMMatrixTranslationFromVector(easyButton->pos)));
 	XMStoreFloat3(&easyButton->mMeshBox.Center, easyButton->pos);
 	XMVECTOR ehalfSize = XMVectorSet(3.0f, 0.5f, 0.5f, 1.5f);
 	XMStoreFloat3(&easyButton->mMeshBox.Extents, ehalfSize);
@@ -1059,8 +1119,9 @@ void Game::CreateMenu()
 	//MEDIUM BUTTON
 	Cube * midButton = new Cube;
 	midButton->pos = XMVectorSet(0, 3, 5, 1);
-	XMMATRIX midboxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
-	XMStoreFloat4x4(&midButton->localWorld, XMMatrixMultiply(midboxScale, XMMatrixTranslationFromVector(midButton->pos)));
+	midButton->originPos = XMVectorSet(0, 3, 5, 1);
+	midButton->scale = XMVectorSet(6.0f, 1.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&midButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(midButton->scale), XMMatrixTranslationFromVector(midButton->pos)));
 	XMStoreFloat3(&midButton->mMeshBox.Center, midButton->pos);
 	XMVECTOR midHalfSize = XMVectorSet(3.0f, 0.5f, 0.5f, 1.5f);
 	XMStoreFloat3(&midButton->mMeshBox.Extents, midHalfSize);
@@ -1071,8 +1132,9 @@ void Game::CreateMenu()
 	//HARD BUTTON
 	Cube * hardButton = new Cube;
 	hardButton->pos = XMVectorSet(7, 3, 5, 1);
-	XMMATRIX hBoxScale = XMMatrixScaling(6.0f, 1.0f, 1.0f);
-	XMStoreFloat4x4(&hardButton->localWorld, XMMatrixMultiply(hBoxScale, XMMatrixTranslationFromVector(hardButton->pos)));
+	hardButton->originPos = XMVectorSet(7, 3, 5, 1);
+	hardButton->scale = XMVectorSet(6.0f, 1.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&hardButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(hardButton->scale), XMMatrixTranslationFromVector(hardButton->pos)));
 	XMStoreFloat3(&hardButton->mMeshBox.Center, hardButton->pos);
 	XMVECTOR hardHalfSize = XMVectorSet(3.0f, 0.5f, 0.5f, 1.0f);
 	XMStoreFloat3(&hardButton->mMeshBox.Extents, hardHalfSize);
@@ -1083,8 +1145,9 @@ void Game::CreateMenu()
 	//EXIT BUTTON
 	Cube * exitButton = new Cube;
 	exitButton->pos = XMVectorSet(9, -7, 5, 1);
-	XMMATRIX exBoxScale = XMMatrixScaling(2.0f, 1.0f, 1.0f);
-	XMStoreFloat4x4(&exitButton->localWorld, XMMatrixMultiply(exBoxScale, XMMatrixTranslationFromVector(exitButton->pos)));
+	exitButton->originPos = XMVectorSet(9, -7, 5, 1);
+	exitButton->scale = XMVectorSet(2.0f, 1.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&exitButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(exitButton->scale), XMMatrixTranslationFromVector(exitButton->pos)));
 	XMStoreFloat3(&exitButton->mMeshBox.Center, exitButton->pos);
 	XMVECTOR exitHalfSize = XMVectorSet(1.0f, 0.5f, 0.5f, 1.0f);
 	XMStoreFloat3(&exitButton->mMeshBox.Extents, exitHalfSize);
@@ -1095,8 +1158,9 @@ void Game::CreateMenu()
 	//SOUND TOGGLE
 	Cube * soundButton = new Cube;
 	soundButton->pos = XMVectorSet(-8, -5, 5, 1);
-	XMMATRIX sBoxScale = XMMatrixScaling(4.0f, 1.0f, 1.0f);
-	XMStoreFloat4x4(&soundButton->localWorld, XMMatrixMultiply(sBoxScale, XMMatrixTranslationFromVector(soundButton->pos)));
+	soundButton->originPos = XMVectorSet(-8, -5, 5, 1);
+	soundButton->scale = XMVectorSet(4.0f, 1.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&soundButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(soundButton->scale), XMMatrixTranslationFromVector(soundButton->pos)));
 	XMStoreFloat3(&soundButton->mMeshBox.Center, soundButton->pos);
 	XMVECTOR sHalfSize = XMVectorSet(2.0f, 0.5f, 0.5f, 1.0f);
 	XMStoreFloat3(&soundButton->mMeshBox.Extents, sHalfSize);
@@ -1107,8 +1171,9 @@ void Game::CreateMenu()
 	//MUSIC TOGGLE
 	Cube * musicButton = new Cube;
 	musicButton->pos = XMVectorSet(-8, -7, 5, 1);
-	XMMATRIX musicBoxScale = XMMatrixScaling(4.0f, 1.0f, 1.0f);
-	XMStoreFloat4x4(&musicButton->localWorld, XMMatrixMultiply(musicBoxScale, XMMatrixTranslationFromVector(musicButton->pos)));
+	musicButton->originPos = XMVectorSet(-8, -7, 5, 1);
+	musicButton->scale = XMVectorSet(4.0f, 1.0f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&musicButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(musicButton->scale), XMMatrixTranslationFromVector(musicButton->pos)));
 	XMStoreFloat3(&musicButton->mMeshBox.Center, musicButton->pos);
 	XMVECTOR musicHalfSize = XMVectorSet(2.0f, 0.5f, 0.5f, 1.0f);
 	XMStoreFloat3(&musicButton->mMeshBox.Extents, musicHalfSize);
@@ -1124,10 +1189,9 @@ void Game::CleanLevel()
 
 void Game::MenuLighting()
 {
-	
-	mDirLights[0].Ambient = XMFLOAT4(0.05f, 0.05f, 0.05f, 1.0f);
-	mDirLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	mDirLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 16.0f);
+	mDirLights[0].Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	mDirLights[0].Diffuse = XMFLOAT4(0.9f, 0.9f, 0.9f, 1.0f);
+	mDirLights[0].Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
 	mDirLights[0].Direction = XMFLOAT3(0.0f, 0.0f, 0.7f);
 
 	mDirLights[1].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -1135,25 +1199,7 @@ void Game::MenuLighting()
 	mDirLights[1].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	mDirLights[1].Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	
-	mPointLights[0].Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
-	mPointLights[0].Diffuse = XMFLOAT4(0.9f, 0.9f, 0.9f, 1.0f);
-	mPointLights[0].Specular = XMFLOAT4(0.7f, 0.7f, 0.7f, 16.0f);
-	mPointLights[0].Att = XMFLOAT3(0.4f, 0.4f, 1.0f);
-	mPointLights[0].Position = XMFLOAT3(0.0f, -1.0f, 4.75f);
-	mPointLights[0].Range = 5.0f;
-	/*
-	mSpotLights[0].Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
-	mSpotLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	mSpotLights[0].Specular = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
-	mSpotLights[0].Position = XMFLOAT3(-7.0f, 3.0f, -10.0f);
-	mSpotLights[0].Direction = XMFLOAT3(-7.0f, 3.0f, 5.0f);
-	mSpotLights[0].Att = XMFLOAT3(0.4f, 0.4f, 1.0f);
-	mSpotLights[0].Spot = 1.0f;
-	mSpotLights[0].Range = 20.0f;
-	*/
 	Effects::BasicFX->SetDirLights(mDirLights);
-	Effects::BasicFX->SetPointLights(mPointLights);
-	//Effects::BasicFX->SetSpotLights(mSpotLights);
 }
 
 void Game::GameLighting()
@@ -1168,23 +1214,40 @@ void Game::GameLighting()
 	mDirLights[1].Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 16.0f);
 	mDirLights[1].Direction = XMFLOAT3(-0.707f, 0.0f, 0.707f);
 
-	mPointLights[0].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-	mPointLights[0].Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-	mPointLights[0].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-	mPointLights[0].Att = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	mPointLights[0].Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	mPointLights[0].Range = 0.0f;
-
-	mSpotLights[0].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	mSpotLights[0].Diffuse = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
-	mSpotLights[0].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	mSpotLights[0].Position = XMFLOAT3(-7.0f, 3.0f, 0.0f);
-	mSpotLights[0].Direction = XMFLOAT3(-7.0f, 3.0f, 3.0f);
-	mSpotLights[0].Att = XMFLOAT3(0.4f, 0.2f, 1.0f);
-	mSpotLights[0].Spot = 0.3f;
-	mSpotLights[0].Range = 10.0f;
-
 	Effects::BasicFX->SetDirLights(mDirLights);
-	Effects::BasicFX->SetPointLights(mPointLights);
-	Effects::BasicFX->SetSpotLights(mSpotLights);
+}
+
+void Game::IndentDiff(int index)
+{
+	if (!AreSameVec(cubes[index]->pos, cubes[index]->originPos * PushBack))
+	{
+		for (int i = 2; i < 5; ++i)
+		{
+			cubes[i]->pos = cubes[i]->originPos;
+			XMStoreFloat4x4(&cubes[i]->localWorld, XMMatrixScalingFromVector(cubes[i]->scale) * XMMatrixTranslationFromVector(cubes[i]->pos));
+		}
+		curPos = cubes[index]->pos;
+		cubes[index]->pos = curPos * PushBack;
+		XMStoreFloat4x4(&cubes[index]->localWorld, XMMatrixScalingFromVector(cubes[index]->scale) * XMMatrixTranslationFromVector(cubes[index]->pos));
+	}
+	cubes[2]->menuTexture = EASYb;
+	cubes[3]->menuTexture = MEDIUMb;
+	cubes[4]->menuTexture = HARDb;
+}
+
+void Game::SetUpLevelData(int mines)
+{
+	if (!isLevelSet)
+	{
+		for (int i = 0; i < mines; i++) //changes blocks values into mines for the number passes in (mines)
+		{
+			int whichBlock = rand() % cubes.size();
+			while (cubes[whichBlock]->texture == Cube::MINE)
+			{
+				whichBlock = rand() % cubes.size(); //picks a random number between 0 and size of cube array
+			}
+			cubes[whichBlock]->texture = Cube::MINE;
+		}
+		isLevelSet = true;
+	}
 }

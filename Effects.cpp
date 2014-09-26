@@ -96,8 +96,6 @@ BasicEffect::BasicEffect(ID3D11Device* device, const std::wstring& filename)
 	FogStart = mFX->GetVariableByName("gFogStart")->AsScalar();
 	FogRange = mFX->GetVariableByName("gFogRange")->AsScalar();
 	DirLights = mFX->GetVariableByName("gDirLights");
-	SpotLights = mFX->GetVariableByName("gSpotLights");
-	PointLights = mFX->GetVariableByName("gPointLights");
 	Mat = mFX->GetVariableByName("gMaterial");
 	DiffuseMap = mFX->GetVariableByName("gDiffuseMap")->AsShaderResource();
 	CubeMap = mFX->GetVariableByName("gCubeMap")->AsShaderResource();
