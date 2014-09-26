@@ -35,7 +35,7 @@ struct Cube
 	XMVECTOR pos;
 	XMVECTOR originPos;
 	XMVECTOR scale;
-	enum cubeTextures {EMPTY,GRAY,MINE,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,TEN};
+	enum cubeTextures {EMPTY,GRAY,MINE,ONE,TWO,THREE,FOUR,FIVE,SIX,FLAG};
 	cubeTextures texture = GRAY;
 	UINT menuTexture;
 	XNA::AxisAlignedBox mMeshBox;
@@ -79,11 +79,11 @@ private:
 	ID3D11Buffer* mBoxVB;
 	ID3D11Buffer* mBoxIB;
 
-	ID3D11ShaderResourceView* mDiffuseMapSRV;
-	ID3D11ShaderResourceView* mDiffuseMapSRV2;
-	ID3D11ShaderResourceView* mDiffuseMapSRV3[120];
-	ID3D11ShaderResourceView* mDiffuseMapSRV4;
-	ID3D11ShaderResourceView* mDiffuseMapSRV5;
+	ID3D11ShaderResourceView* mDiffuseMapSRVBoxTypes[8];
+	//ID3D11ShaderResourceView* mDiffuseMapSRV2;
+	//ID3D11ShaderResourceView* mDiffuseMapSRV3[120];
+	//ID3D11ShaderResourceView* mDiffuseMapSRV4;
+	//ID3D11ShaderResourceView* mDiffuseMapSRV5;
 	ID3D11ShaderResourceView* mDiffuseMapSRVMenuButtons[12];
 	enum menuButtons {LOGOb,PLAYb,EASYb,EASYbOn,MEDIUMb,MEDIUMbOn,HARDb,HARDbOn,EXITb,SOUNDb,SOUNDbOff,MUSICb,MUSICbOff};
 	menuButtons button;
@@ -203,10 +203,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
  
 
 Game::Game(HINSTANCE hInstance)
-: D3DApp(hInstance), mSky(0), mBoxVB(0), mBoxIB(0), mDiffuseMapSRV(0), mDiffuseMapSRV2(0), mDiffuseMapSRV4(0), mDiffuseMapSRV5(0), mEyePosW(0.0f, 0.0f, 0.0f),
-mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), mMeshIndexCount(0), mPickedTriangle(-1)
+: D3DApp(hInstance), mSky(0), mBoxVB(0), mBoxIB(0), mEyePosW(0.0f, 0.0f, 0.0f), mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), mMeshIndexCount(0), mPickedTriangle(-1)
 {
-	mDiffuseMapSRV3[0] = 0;
+	//mDiffuseMapSRV3[0] = 0;
 	mMainWndCaption = L"3D Minesweeper";
 	
 	mLastMousePos.x = 0;
@@ -228,7 +227,7 @@ mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), m
 	mPickedTriangleMat.Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
 	mPickedTriangleMat.Reflect	= XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	
-	srand(time(NULL));
+//srand(time(NULL));
 	//MakeLevel(5, 5, 5); //makes the cube of blocks.
 	
 
@@ -250,14 +249,14 @@ Game::~Game()
 
 	ReleaseCOM(mBoxVB);
 	ReleaseCOM(mBoxIB);
-	ReleaseCOM(mDiffuseMapSRV);
-	ReleaseCOM(mDiffuseMapSRV2);
-	ReleaseCOM(mDiffuseMapSRV4);
-	ReleaseCOM(mDiffuseMapSRV5);
-	for (int i = 0; i < 120; i++)
+	//ReleaseCOM(mDiffuseMapSRV);
+	//ReleaseCOM(mDiffuseMapSRV2);
+	//ReleaseCOM(mDiffuseMapSRV4);
+	//ReleaseCOM(mDiffuseMapSRV5);
+	/*for (int i = 0; i < 120; i++)
 	{
 		ReleaseCOM(mDiffuseMapSRV3[i]);
-	}
+	}*/
 	
 
 	Effects::DestroyAll();
@@ -385,17 +384,14 @@ void Game::InitTextures()
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/musicoff.png", 0, 0, &mDiffuseMapSRVMenuButtons[12], 0)); //MUSIC
 
 	//Game Textures
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
-		L"Textures/MetalBox.jpg", 0, 0, &mDiffuseMapSRV, 0));
-
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
-		L"Textures/rock.dds", 0, 0, &mDiffuseMapSRV2, 0));
-
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
-		L"Textures/diamond.png", 0, 0, &mDiffuseMapSRV4, 0));
-
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
-		L"Textures/sand.jpg", 0, 0, &mDiffuseMapSRV5, 0));
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/MetalBox.jpg", 0, 0, &mDiffuseMapSRVBoxTypes[0], 0));
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/diamond.png", 0, 0, &mDiffuseMapSRVBoxTypes[1], 0));
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/one.png", 0, 0, &mDiffuseMapSRVBoxTypes[2], 0));
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/two.png", 0, 0, &mDiffuseMapSRVBoxTypes[3], 0));
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/three.png", 0, 0, &mDiffuseMapSRVBoxTypes[4], 0));
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/four.png", 0, 0, &mDiffuseMapSRVBoxTypes[5], 0));
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/five.png", 0, 0, &mDiffuseMapSRVBoxTypes[6], 0));
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/flag.png", 0, 0, &mDiffuseMapSRVBoxTypes[6], 0));
 }
 
 bool Game::Init()
@@ -411,7 +407,7 @@ bool Game::Init()
 	InitTextures();
 	CreateMenu();
 
-	std::wstring filename = L"Textures/FireAnim/Fire";
+	/*std::wstring filename = L"Textures/FireAnim/Fire";
 	for (int i = 1; i < 121; i++)
 	{
 		std::wstringstream os;
@@ -430,13 +426,9 @@ bool Game::Init()
 		}
 		intString = os.str();
 		num = (LPCTSTR)intString.c_str();
-		HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,
-			num, 0, 0, &mDiffuseMapSRV3[i-1], 0));
-	}
-
- 
+		HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice,num, 0, 0, &mDiffuseMapSRV3[i-1], 0));
+	}*/
 	BuildGeometryBuffers();
-
 	return true;
 }
 
@@ -558,7 +550,7 @@ void Game::DrawScene()
 	//Set Cubemap
 	Effects::BasicFX->SetCubeMap(mSky->CubeMapSRV());
 
-	ID3DX11EffectTechnique* activeTexTech = Effects::BasicFX->Light3TexTech;
+	ID3DX11EffectTechnique* activeTexTech = Effects::BasicFX->Light3TexAlphaClipTech;//Effects::BasicFX->Light3TexTech;
 
     D3DX11_TECHNIQUE_DESC techDesc;
 	activeTexTech->GetDesc( &techDesc );
@@ -602,10 +594,28 @@ void Game::DrawScene()
 					switch (cubes[i]->texture) //show texture of cube
 					{
 					case Cube::GRAY:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV); //metel box
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[0]); //metel box
 						break;
 					case Cube::MINE:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV4); //diamond
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[1]); //diamond
+						break;
+					case Cube::ONE:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[2]); //one
+						break;
+					case Cube::TWO:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[3]); //two
+						break;
+					case Cube::THREE:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[4]); //three
+						break;
+					case Cube::FOUR:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[5]); //four
+						break;
+					case Cube::FIVE:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[6]); //five
+						break;
+					case Cube::FLAG:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[7]); //flag
 						break;
 						/*case 0:
 							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV); //grass
@@ -1057,7 +1067,7 @@ void Game::Pick(int sx, int sy)
 			switch (cubes[place]->texture)
 			{
 			case Cube::GRAY:
-				SetUpLevelData(10);
+				SetUpLevelData(20);
 				CheckBlockSides(place);
 				//cubesChecked.clear();
 				//delete(cubes[place]);
@@ -1266,7 +1276,14 @@ int Game::CheckBlockSides(int placeInArray)
 		}
 	}
 	cubesChecked.push_back(cubes[placeInArray]->uniqueID);
+	int numOfMinesTouching = 0;
 	
+	/*if (placeInArray == 197)
+	{
+		int u = 0;
+	}*/
+
+
 	//make counter for number of mines
 	//int q = (36 / 35) + 1; 
 	int layerArea = levelWidth * levelLength;
@@ -1277,13 +1294,13 @@ int Game::CheckBlockSides(int placeInArray)
 	//check left
 	int left = placeInArray - 1;
 	if (left >= 0 &&
-		//left % levelWidth != 0 &&
+		placeInArray % levelWidth != 0 &&
 		cubes[left] != NULL)
 	{
 		if (cubes[left]->texture == Cube::MINE)
 		{
-			//counter ++;
-			return 0;
+			numOfMinesTouching++;
+			//return 0;
 		}
 		else
 		{
@@ -1294,12 +1311,13 @@ int Game::CheckBlockSides(int placeInArray)
 	//check right
 	int right = placeInArray + 1;
 	if (right < cubeVolume &&
-		//right % levelWidth != levelWidth - 1 &&
+		placeInArray % levelWidth != levelWidth - 1 &&
 		cubes[right] != NULL)
 	{
 		if (cubes[right]->texture == Cube::MINE)
 		{
-			return 0;
+			numOfMinesTouching++;
+			//return 0;
 		}
 		else
 		{
@@ -1317,7 +1335,8 @@ int Game::CheckBlockSides(int placeInArray)
 	{
 		if (cubes[forward]->texture == Cube::MINE)
 		{
-			return 0;
+			numOfMinesTouching++;
+			//return 0;
 		}
 		else
 		{
@@ -1328,14 +1347,15 @@ int Game::CheckBlockSides(int placeInArray)
 	//check backward
 	int back = placeInArray - levelWidth;
 	layer = (back / layerArea) + 1;
-	temp = (back - (layerArea * layer - 1)) + levelWidth; //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
+	temp = placeInArray - (layerArea - (layer - 1));//(placeInArray - (layerArea * layer - 1)) - layerArea; //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
 	if (back >= 0 &&
-		//temp <= -(layerArea)-levelWidth &&
+		temp >= levelWidth && //temp >= -(layerArea)+levelWidth &&
 		cubes[back] != NULL) //this if is never true
 	{
 		if (cubes[back]->texture == Cube::MINE)
 		{
-			return 0; 
+			numOfMinesTouching++;
+			//return 0; 
 		}
 		else
 		{
@@ -1351,7 +1371,8 @@ int Game::CheckBlockSides(int placeInArray)
 	{
 		if (cubes[above]->texture == Cube::MINE)
 		{
-			return 0;
+			numOfMinesTouching++;
+			//return 0;
 		}
 		else
 		{
@@ -1367,7 +1388,8 @@ int Game::CheckBlockSides(int placeInArray)
 	{
 		if (cubes[below]->texture == Cube::MINE)
 		{
-			return 0;
+			numOfMinesTouching++;
+			//return 0;
 		}
 		else
 		{
@@ -1375,7 +1397,34 @@ int Game::CheckBlockSides(int placeInArray)
 		}
 	}
 
-	delete(cubes[placeInArray]);
-	cubes[placeInArray] = NULL;
+	//removes bounding box if the cube is going to represent a number
+	if (numOfMinesTouching > 0 && numOfMinesTouching < 6)
+	{
+		XMStoreFloat3(&cubes[placeInArray]->mMeshBox.Extents, XMVectorZero());
+	}
+	//sets the texture of cube depending on how many mines its touching or deletes it.
+	switch (numOfMinesTouching)
+	{
+	case 1:
+		cubes[placeInArray]->texture = Cube::ONE;
+		break;
+	case 2:
+		cubes[placeInArray]->texture = Cube::TWO;
+		break;
+	case 3:
+		cubes[placeInArray]->texture = Cube::THREE;
+		break;
+	case 4:
+		cubes[placeInArray]->texture = Cube::FOUR;
+		break;
+	case 5:
+		cubes[placeInArray]->texture = Cube::FIVE;
+		break;
+	default:
+		delete(cubes[placeInArray]);
+		cubes[placeInArray] = NULL;
+		break;
+
+	}
 	return 0;
 }
