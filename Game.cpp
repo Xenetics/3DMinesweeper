@@ -91,7 +91,7 @@ private:
 	LPCTSTR num;
 
 	// Lighting variables
-	DirectionalLight mDirLights[2];
+	DirectionalLight mDirLights[3];
 
 	// Material variables
 	Material mBoxMat;
@@ -567,8 +567,7 @@ void Game::DrawScene()
 				whichIMG = 0;
 			}
 		}
-		if (GetAsyncKeyState('1') & 0x8000)
-			md3dImmediateContext->RSSetState(RenderStates::WireframeRS);
+		if (GetAsyncKeyState('1') & 0x8000)md3dImmediateContext->RSSetState(RenderStates::WireframeRS);
 
 		md3dImmediateContext->IASetVertexBuffers(0, 1, &mBoxVB, &stride, &offset);
 		md3dImmediateContext->IASetIndexBuffer(mBoxIB, DXGI_FORMAT_R32_UINT, 0);
@@ -1207,6 +1206,11 @@ void Game::MenuLighting()
 	mDirLights[1].Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	mDirLights[1].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	mDirLights[1].Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
+
+	mDirLights[2].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+	mDirLights[2].Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+	mDirLights[2].Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+	mDirLights[2].Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	
 	Effects::BasicFX->SetDirLights(mDirLights);
 }
@@ -1216,12 +1220,17 @@ void Game::GameLighting()
 	mDirLights[0].Ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
 	mDirLights[0].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
 	mDirLights[0].Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
-	mDirLights[0].Direction = XMFLOAT3(0.707f, -0.707f, 0.0f);
+	mDirLights[0].Direction = XMFLOAT3(0.307f, -0.307f, 0.0f);
 
-	mDirLights[1].Ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-	mDirLights[1].Diffuse = XMFLOAT4(1.4f, 1.4f, 1.4f, 1.0f);
-	mDirLights[1].Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 16.0f);
-	mDirLights[1].Direction = XMFLOAT3(-0.707f, 0.0f, 0.707f);
+	mDirLights[1].Ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+	mDirLights[1].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+	mDirLights[1].Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
+	mDirLights[1].Direction = XMFLOAT3(-0.307f, 0.0f, 0.307f);
+
+	mDirLights[2].Ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+	mDirLights[2].Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+	mDirLights[2].Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
+	mDirLights[2].Direction = XMFLOAT3(-0.307f, 0.307f, -0.307f);
 
 	Effects::BasicFX->SetDirLights(mDirLights);
 }
