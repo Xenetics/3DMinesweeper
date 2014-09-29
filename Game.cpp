@@ -462,7 +462,7 @@ void Game::UpdateScene(float dt)
 	//
 	// Control the camera.
 	//
-	if (!menu || menu) //disables camera control when viewing the menu
+	if (!menu) //disables camera control when viewing the menu
 	{
 		if (GetAsyncKeyState('W') & 0x8000 || GetAsyncKeyState(VK_UP) & 0x8000)
 		{
