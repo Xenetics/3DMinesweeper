@@ -1287,7 +1287,7 @@ int Game::CheckBlockSides(int placeInArray)
 	cubesChecked.push_back(cubes[placeInArray]->uniqueID);
 	int numOfMinesTouching = 0;
 	
-	/*if (placeInArray == 197)
+	/*if (placeInArray == 184)
 	{
 		int u = 0;
 	}*/
@@ -1356,7 +1356,7 @@ int Game::CheckBlockSides(int placeInArray)
 	//check backward
 	int back = placeInArray - levelWidth;
 	layer = (back / layerArea) + 1;
-	temp = placeInArray - (layerArea - (layer - 1));//(placeInArray - (layerArea * layer - 1)) - layerArea; //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
+	temp = placeInArray - (layerArea * layer);//(placeInArray - (layerArea * layer - 1)) - layerArea; //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
 	if (back >= 0 &&
 		temp >= levelWidth && //temp >= -(layerArea)+levelWidth &&
 		cubes[back] != NULL) //this if is never true
