@@ -1,12 +1,26 @@
-//***************************************************************************************
-// TODO SHAD: add new menu button texture images in the initTextures function.
-//
-//
-// 
-//		
-//      
-//
-//***************************************************************************************
+/***************************************************************************************\
+ GENERAL TODO:
+	Need way to go back to main menu from game
+	timer
+
+ 
+ 
+ 
+ TODO SHAD: 
+	-add new menu button texture images in the initTextures function.
+
+
+ 
+	
+      
+ NOTES FOR ALEX:
+	-for the CheckBlockSides:
+		+The first block you click does not get checked correctly(or its just that the texture is set wrong)
+		+the numbers on edges are not right most of the time --THIS SEEMS TO BE THE REAL PROBLEM HERE--
+			(so there is something wrong with the way that edge blocks check what is around them)
+		+it seems like All blocks are check even though logicly this should not happen
+	
+\***************************************************************************************/
 
 #include "d3dApp.h"
 #include "d3dx11Effect.h"
@@ -28,7 +42,14 @@
 #include "fmod.hpp"
 #include "fmod_errors.h"
 
+//DEFINES BEUCASE FUCK LOOKING THROUGH FILE
 #define EPSILON 0.00001
+#define SML_LVL_SIZE 2
+#define MED_LVL_SIZE 4
+#define LRG_LVL_SIZE 10
+#define NUM_MINES 2
+
+#define SEED 2
 
 struct Cube
 {
@@ -227,7 +248,7 @@ Game::Game(HINSTANCE hInstance)
 	mPickedTriangleMat.Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
 	mPickedTriangleMat.Reflect	= XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	
-//srand(time(NULL));
+	srand(SEED);//time(NULL));
 	//MakeLevel(5, 5, 5); //makes the cube of blocks.
 	
 
@@ -1009,15 +1030,15 @@ void Game::Pick(int sx, int sy)
 						switch (diffState)
 						{
 						case EASY:
-							MakeLevel(6, 6, 6);
+							MakeLevel(SML_LVL_SIZE, SML_LVL_SIZE, SML_LVL_SIZE);
 							menu = false;
 							break;
 						case MEDIUM:
-							MakeLevel(8, 8, 8);
+							MakeLevel(MED_LVL_SIZE, MED_LVL_SIZE, MED_LVL_SIZE);
 							menu = false;
 							break;
 						case HARD:
-							MakeLevel(10, 10, 10);
+							MakeLevel(LRG_LVL_SIZE, LRG_LVL_SIZE, LRG_LVL_SIZE);
 							menu = false;
 							break;
 						case NONE:
@@ -1066,11 +1087,11 @@ void Game::Pick(int sx, int sy)
 			switch (cubes[place]->texture)
 			{
 			case Cube::GRAY:
-				SetUpLevelData(20);
+				SetUpLevelData(NUM_MINES);
 				CheckBlockSides(place);
 				//cubesChecked.clear();
 				//delete(cubes[place]);
-				cubes[place] = NULL;
+				//cubes[place] = NULL;
 				//cubes.erase(cubes.begin() + place);
 				break;
 			case Cube::MINE:
@@ -1273,10 +1294,13 @@ void Game::SetUpLevelData(int mines)
 
 int Game::CheckBlockSides(int placeInArray)
 {
-	if (cubes[placeInArray] == NULL)
+	//check if the block is not really a block
+	if (cubes[placeInArray] == NULL || cubes[placeInArray]->texture == Cube::MINE)
 	{
 		return 0;
 	}
+
+	//check if it has beed checked before
 	for (int i = 0; i < cubesChecked.size(); i++)
 	{
 		if (cubesChecked[i] == placeInArray)
@@ -1284,6 +1308,7 @@ int Game::CheckBlockSides(int placeInArray)
 			return 0;
 		}
 	}
+
 	cubesChecked.push_back(cubes[placeInArray]->uniqueID);
 	int numOfMinesTouching = 0;
 	
@@ -1294,14 +1319,39 @@ int Game::CheckBlockSides(int placeInArray)
 
 
 	//make counter for number of mines
-	//int q = (36 / 35) + 1; 
+	//int q = (36 / 35) + 1;
 	int layerArea = levelWidth * levelLength;
 	int cubeVolume = levelWidth * levelLength * levelHeight;
 	int layer;
 	int temp;
-	
-	//check left
+
+	//get the different blocks places 
 	int left = placeInArray - 1;
+	int right = placeInArray + 1;
+	int forward = placeInArray + levelWidth;
+	int back = placeInArray - levelWidth;
+	int above = placeInArray + layerArea;
+	int below = placeInArray - layerArea;
+
+	//lambda to check stuff for removel
+	auto checkRemoveBlock = [&](int blockPlace) 
+	{
+
+		//check if the block is not really a block
+		if (cubes.size() > blockPlace && !cubes[blockPlace] == NULL)
+		{
+			//check if it has beed checked before
+			for (int i = 0; i < cubesChecked.size(); i++)
+			{
+				if (!cubesChecked[i] == blockPlace)
+				{
+					cubesChecked.push_back(cubes[blockPlace]->uniqueID);
+				}
+			}
+		}		
+	};
+
+	//check left
 	if (left >= 0 &&
 		placeInArray % levelWidth != 0 &&
 		cubes[left] != NULL)
@@ -1309,16 +1359,21 @@ int Game::CheckBlockSides(int placeInArray)
 		if (cubes[left]->texture == Cube::MINE)
 		{
 			numOfMinesTouching++;
-			//return 0;
+			//make all the blocks aroiund the block we are checking marked as checked(this should mostly work
+			checkRemoveBlock(right);
+			checkRemoveBlock(forward);
+			checkRemoveBlock(back);
+			checkRemoveBlock(above);
+			checkRemoveBlock(below);
+
 		}
-		else
+		else if(cubes[left]->texture == Cube::GRAY)
 		{
 			CheckBlockSides(left);
 		}
 	}
 
 	//check right
-	int right = placeInArray + 1;
 	if (right < cubeVolume &&
 		placeInArray % levelWidth != levelWidth - 1 &&
 		cubes[right] != NULL)
@@ -1327,17 +1382,19 @@ int Game::CheckBlockSides(int placeInArray)
 		{
 			numOfMinesTouching++;
 			//return 0;
+			checkRemoveBlock(left);
+			checkRemoveBlock(forward);
+			checkRemoveBlock(back);
+			checkRemoveBlock(above);
+			checkRemoveBlock(below);
 		}
-		else
+		else if (cubes[right]->texture == Cube::GRAY)
 		{
 			CheckBlockSides(right);
 		}
 	}
 
 	//check forward
-	int forward = placeInArray + levelWidth;
-	layer = (forward / layerArea) + 1;
-	temp = (forward - ((layerArea * layer) - 1)); //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
 	if (forward < cubeVolume - levelWidth &&
 	//temp <= -((layerArea / levelWidth)) + 1 &&
 		cubes[forward] != NULL) //is not in top row)
@@ -1346,15 +1403,19 @@ int Game::CheckBlockSides(int placeInArray)
 		{
 			numOfMinesTouching++;
 			//return 0;
+			checkRemoveBlock(right);
+			checkRemoveBlock(left);
+			checkRemoveBlock(back);
+			checkRemoveBlock(above);
+			checkRemoveBlock(below);
 		}
-		else
+		else if (cubes[forward]->texture == Cube::GRAY)
 		{
 			CheckBlockSides(forward);
 		}
 	}
 
-	//check backward
-	int back = placeInArray - levelWidth;
+	//check backward (maybe does not work always)
 	layer = (back / layerArea) + 1;
 	temp = placeInArray - (layerArea * layer);//(placeInArray - (layerArea * layer - 1)) - layerArea; //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
 	if (back >= 0 &&
@@ -1365,15 +1426,19 @@ int Game::CheckBlockSides(int placeInArray)
 		{
 			numOfMinesTouching++;
 			//return 0; 
+			checkRemoveBlock(right);
+			checkRemoveBlock(forward);
+			checkRemoveBlock(left);
+			checkRemoveBlock(above);
+			checkRemoveBlock(below);
 		}
-		else
+		else if (cubes[back]->texture == Cube::GRAY)
 		{
 			CheckBlockSides(back);
 		}
 	}
 
 	//check above
-	int above = placeInArray + layerArea;
 	//layer = (above / layerArea) + 1;
 	if (above < cubeVolume &&
 		cubes[above] != NULL)
@@ -1382,15 +1447,19 @@ int Game::CheckBlockSides(int placeInArray)
 		{
 			numOfMinesTouching++;
 			//return 0;
+			checkRemoveBlock(right);
+			checkRemoveBlock(forward);
+			checkRemoveBlock(back);
+			checkRemoveBlock(left);
+			checkRemoveBlock(below);
 		}
-		else
+		else if (cubes[above]->texture == Cube::GRAY)
 		{
 			CheckBlockSides(above);
 		}
 	}
 
 	//check below
-	int below = placeInArray - layerArea;
 	//layer = (above / layerArea) + 1;
 	if (below >= 0 &&
 		cubes[below] != NULL)
@@ -1399,8 +1468,13 @@ int Game::CheckBlockSides(int placeInArray)
 		{
 			numOfMinesTouching++;
 			//return 0;
+			checkRemoveBlock(right);
+			checkRemoveBlock(forward);
+			checkRemoveBlock(back);
+			checkRemoveBlock(above);
+			checkRemoveBlock(left);
 		}
-		else
+		else if (cubes[below]->texture == Cube::GRAY)
 		{
 			CheckBlockSides(below);
 		}
