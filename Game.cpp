@@ -14,11 +14,7 @@
 	
       
  NOTES FOR ALEX:
-	-for the CheckBlockSides:
-		+The first block you click does not get checked correctly(or its just that the texture is set wrong)
-		+the numbers on edges are not right most of the time --THIS SEEMS TO BE THE REAL PROBLEM HERE--
-			(so there is something wrong with the way that edge blocks check what is around them)
-		+it seems like All blocks are check even though logicly this should not happen
+
 	
 \***************************************************************************************/
 
@@ -42,13 +38,18 @@
 #include "fmod.hpp"
 #include "fmod_errors.h"
 
-//DEFINES BEUCASE FUCK LOOKING THROUGH FILE
+//DEFINES BEUCASE FUCK LOOKING THROUGH FILEa
 #define EPSILON 0.00001
-#define SML_LVL_SIZE 2
-#define MED_LVL_SIZE 4
+#define SML_LVL_SIZE 4
+#define MED_LVL_SIZE 6
 #define LRG_LVL_SIZE 10
-#define NUM_MINES 2
 
+#define SML_NUM_MINES 12
+#define MED_NUM_MINES 28
+#define LRG_NUM_MINES 100
+
+
+#define FUNC_TIME_LENGTH 11
 #define SEED 2
 
 struct Cube
@@ -56,8 +57,10 @@ struct Cube
 	XMVECTOR pos;
 	XMVECTOR originPos;
 	XMVECTOR scale;
+	bool flagged = false;
 	enum cubeTextures {EMPTY,GRAY,MINE,ONE,TWO,THREE,FOUR,FIVE,SIX,FLAG};
 	cubeTextures texture = GRAY;
+
 	UINT menuTexture;
 	XNA::AxisAlignedBox mMeshBox;
 	bool isMenu = false;
@@ -84,7 +87,7 @@ public:
 	void OnMouseMove(WPARAM btnState, int x, int y);
 	void OnMouseWheelMove(WPARAM btnState,int fwKeys, int zDelta, int x, int y);
 	void MakeLevel(UINT width, UINT length, UINT height);
-	void Pick(int sx, int sy);
+	void Pick(int sx, int sy, int button);
 	void MenuLighting();
 	void GameLighting();
 
@@ -93,6 +96,8 @@ private:
 
 	void InitFMOD();
 	void UpdateSound();
+
+	float funcTimer = 10.0f;
 
 private:
 	Sky* mSky;
@@ -412,7 +417,7 @@ void Game::InitTextures()
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/three.png", 0, 0, &mDiffuseMapSRVBoxTypes[4], 0));
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/four.png", 0, 0, &mDiffuseMapSRVBoxTypes[5], 0));
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/five.png", 0, 0, &mDiffuseMapSRVBoxTypes[6], 0));
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/flag.png", 0, 0, &mDiffuseMapSRVBoxTypes[6], 0));
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/flag.png", 0, 0, &mDiffuseMapSRVBoxTypes[7], 0));
 }
 
 bool Game::Init()
@@ -534,6 +539,46 @@ void Game::UpdateScene(float dt)
 	{
 		PostQuitMessage(0);
 	}
+
+	//win check
+	int minesFlagged = 0;
+	for (int i = 0; i < cubes.size(); i++)
+	{
+		if (cubes[i] != NULL)
+		{
+			if (cubes[i]->flagged == true && cubes[i]->texture == Cube::MINE)
+			{
+				minesFlagged++;
+			}
+		}
+	}
+	switch (levelHeight)
+	{
+	case SML_LVL_SIZE:
+		if (minesFlagged == SML_NUM_MINES)
+		{
+			MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
+			CleanLevel();
+			MakeLevel(levelWidth, levelHeight, levelLength);
+		}
+		break;
+	case MED_LVL_SIZE:
+		if (minesFlagged == MED_NUM_MINES)
+		{
+			MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
+			CleanLevel();
+			MakeLevel(levelWidth, levelHeight, levelLength);
+		}
+		break;
+	case LRG_LVL_SIZE:
+		if (minesFlagged == LRG_NUM_MINES)
+		{
+			MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
+			CleanLevel();
+			MakeLevel(levelWidth, levelHeight, levelLength);
+		}
+		break;
+	}
 }
 
 void Game::DrawScene()
@@ -611,48 +656,56 @@ void Game::DrawScene()
 					Effects::BasicFX->SetMaterial(mBoxMat);
 					//Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV);
 					//Effects::BasicFX->SetDiffuseMap2(mDiffuseMapSRV2);
-					switch (cubes[i]->texture) //show texture of cube
+					if (cubes[i]->flagged == true)
 					{
-					case Cube::GRAY:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[0]); //metel box
-						break;
-					case Cube::MINE:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[1]); //diamond
-						break;
-					case Cube::ONE:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[2]); //one
-						break;
-					case Cube::TWO:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[3]); //two
-						break;
-					case Cube::THREE:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[4]); //three
-						break;
-					case Cube::FOUR:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[5]); //four
-						break;
-					case Cube::FIVE:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[6]); //five
-						break;
-					case Cube::FLAG:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[7]); //flag
-						break;
-						/*case 0:
-							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV); //grass
-							break;
-							case 1:
-							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV2); //stone
-							break;
-							case 2:
-							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV3[whichIMG]); //fire
-							break;
-							case 3:
-							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV4); //diamond
-							break;
-							case 4:
-							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV5); //sand
-							break;*/
 					}
+					else
+					{
+						switch (cubes[i]->texture) //show texture of cube
+						{
+						case Cube::GRAY:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[0]); //metel box
+							break;
+						case Cube::MINE:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[0]); //diamond
+							break;
+						case Cube::ONE:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[2]); //one
+							break;
+						case Cube::TWO:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[3]); //two
+							break;
+						case Cube::THREE:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[4]); //three
+							break;
+						case Cube::FOUR:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[5]); //four
+							break;
+						case Cube::FIVE:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[6]); //five
+							break;
+						case Cube::FLAG:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[7]); //flag
+							break;
+							/*case 0:
+								Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV); //grass
+								break;
+								case 1:
+								Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV2); //stone
+								break;
+								case 2:
+								Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV3[whichIMG]); //fire
+								break;
+								case 3:
+								Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV4); //diamond
+								break;
+								case 4:
+								Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV5); //sand
+								break;*/
+						}
+					}
+					
 					activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
 					md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
 				
@@ -775,8 +828,11 @@ void Game::OnMouseDown(WPARAM btnState, int x, int y)
 	}*/
 	if ((btnState & MK_LBUTTON) != 0)
 	{
-		Pick(x, y);
-		
+		Pick(x, y, MK_LBUTTON);
+	}
+	if ((btnState & MK_RBUTTON) != 0)
+	{
+		Pick(x, y, MK_RBUTTON);
 	}
 
 }
@@ -961,7 +1017,7 @@ bool Game::AreSameVec(XMVECTOR a, XMVECTOR b)
 		return false;
 }
 
-void Game::Pick(int sx, int sy)
+void Game::Pick(int sx, int sy, int button)
 {
 	XMMATRIX P = mCam.Proj();
 
@@ -1084,20 +1140,39 @@ void Game::Pick(int sx, int sy)
 			std::sort(cubesTouched.begin(), cubesTouched.end(), SortByVector);
 			int size = cubes.size();
 			int place = cubesTouched[0]->uniqueID;
-			switch (cubes[place]->texture)
+
+			if (button == MK_LBUTTON && !cubes[place]->flagged)
 			{
-			case Cube::GRAY:
-				SetUpLevelData(NUM_MINES);
-				CheckBlockSides(place);
-				//cubesChecked.clear();
-				//delete(cubes[place]);
-				//cubes[place] = NULL;
-				//cubes.erase(cubes.begin() + place);
-				break;
-			case Cube::MINE:
-				CleanLevel();
-				MakeLevel(levelWidth,levelHeight,levelLength);
-				break;
+				switch (cubes[place]->texture)
+				{
+				case Cube::GRAY:
+					switch (levelHeight)
+					{
+					case SML_LVL_SIZE:
+						SetUpLevelData(SML_NUM_MINES);
+						break;
+					case MED_LVL_SIZE:
+						SetUpLevelData(MED_NUM_MINES);
+						break;
+					case LRG_LVL_SIZE:
+						SetUpLevelData(LRG_NUM_MINES);
+						break;
+					}
+					CheckBlockSides(place);
+					cubesChecked.clear();
+					//delete(cubes[place]);
+					//cubes[place] = NULL;
+					//cubes.erase(cubes.begin() + place);
+					break;
+				case Cube::MINE:
+					CleanLevel();
+					MakeLevel(levelWidth, levelHeight, levelLength);
+					break;
+				}
+			}
+			else if (button == MK_RBUTTON)//swap is flagged state
+			{
+				cubes[place]->flagged = !cubes[place]->flagged;
 			}
 		}
 	}
@@ -1294,8 +1369,18 @@ void Game::SetUpLevelData(int mines)
 
 int Game::CheckBlockSides(int placeInArray)
 {
+	while (funcTimer > 0)
+	{
+		DrawScene();
+		funcTimer -= FUNC_TIME_LENGTH;
+	}
+	funcTimer = 10;
+
+
+
+
 	//check if the block is not really a block
-	if (cubes[placeInArray] == NULL || cubes[placeInArray]->texture == Cube::MINE)
+	if ( placeInArray < cubes.size() && cubes[placeInArray] == NULL || cubes[placeInArray]->texture == Cube::MINE)
 	{
 		return 0;
 	}
@@ -1322,8 +1407,17 @@ int Game::CheckBlockSides(int placeInArray)
 	//int q = (36 / 35) + 1;
 	int layerArea = levelWidth * levelLength;
 	int cubeVolume = levelWidth * levelLength * levelHeight;
-	int layer;
+	int layerCurr = (placeInArray / layerArea) + 1;
+	int layerOther;
 	int temp;
+
+	//set up some vars for runnnig the function again
+	bool runLeft = false;
+	bool runRight = false;
+	bool runAbove = false;
+	bool runBelow = false;
+	bool runForward = false;
+	bool runBack = false;
 
 	//get the different blocks places 
 	int left = placeInArray - 1;
@@ -1360,16 +1454,16 @@ int Game::CheckBlockSides(int placeInArray)
 		{
 			numOfMinesTouching++;
 			//make all the blocks aroiund the block we are checking marked as checked(this should mostly work
-			checkRemoveBlock(right);
-			checkRemoveBlock(forward);
-			checkRemoveBlock(back);
-			checkRemoveBlock(above);
-			checkRemoveBlock(below);
+			//checkRemoveBlock(right);
+			//checkRemoveBlock(forward);
+			//checkRemoveBlock(back);
+			//checkRemoveBlock(above);
+			//checkRemoveBlock(below);
 
 		}
 		else if(cubes[left]->texture == Cube::GRAY)
 		{
-			CheckBlockSides(left);
+			runLeft = true;
 		}
 	}
 
@@ -1382,101 +1476,105 @@ int Game::CheckBlockSides(int placeInArray)
 		{
 			numOfMinesTouching++;
 			//return 0;
-			checkRemoveBlock(left);
-			checkRemoveBlock(forward);
-			checkRemoveBlock(back);
-			checkRemoveBlock(above);
-			checkRemoveBlock(below);
+			//checkRemoveBlock(left);
+			//checkRemoveBlock(forward);
+			//checkRemoveBlock(back);
+			//checkRemoveBlock(above);
+			//checkRemoveBlock(below);
 		}
 		else if (cubes[right]->texture == Cube::GRAY)
 		{
-			CheckBlockSides(right);
+			runRight = true;
 		}
 	}
 
 	//check forward
+	layerOther = (forward / layerArea) + 1;
+	//temp = placeInArray - (layerArea * layer);
 	if (forward < cubeVolume - levelWidth &&
-	//temp <= -((layerArea / levelWidth)) + 1 &&
+		layerCurr == layerOther &&
+		//temp <= -((layerArea / levelWidth)) + 1 && //old andrew stuff
 		cubes[forward] != NULL) //is not in top row)
 	{
 		if (cubes[forward]->texture == Cube::MINE)
 		{
 			numOfMinesTouching++;
 			//return 0;
-			checkRemoveBlock(right);
-			checkRemoveBlock(left);
-			checkRemoveBlock(back);
-			checkRemoveBlock(above);
-			checkRemoveBlock(below);
+			//checkRemoveBlock(right);
+			//checkRemoveBlock(left);
+			//checkRemoveBlock(back);
+			//checkRemoveBlock(above);
+			//checkRemoveBlock(below);
 		}
 		else if (cubes[forward]->texture == Cube::GRAY)
 		{
-			CheckBlockSides(forward);
+			runForward = true;
 		}
 	}
 
-	//check backward (maybe does not work always)
-	layer = (back / layerArea) + 1;
-	temp = placeInArray - (layerArea * layer);//(placeInArray - (layerArea * layer - 1)) - layerArea; //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
+	//check backward
+	layerOther = (back / layerArea) + 1; //Horizontal layer (xz Plane)
+	temp = placeInArray - (layerArea * layerOther);//(placeInArray - (layerArea * layer - 1)) - layerArea; //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
 	if (back >= 0 &&
-		temp >= levelWidth && //temp >= -(layerArea)+levelWidth &&
+		layerCurr == layerOther &&
+		temp >= levelWidth && //temp >= -(layerArea)+levelWidth && //Old andrew stuff
 		cubes[back] != NULL) //this if is never true
 	{
 		if (cubes[back]->texture == Cube::MINE)
 		{
 			numOfMinesTouching++;
 			//return 0; 
-			checkRemoveBlock(right);
-			checkRemoveBlock(forward);
-			checkRemoveBlock(left);
-			checkRemoveBlock(above);
-			checkRemoveBlock(below);
+			//checkRemoveBlock(right);
+			//checkRemoveBlock(forward);
+			//checkRemoveBlock(left);
+			//checkRemoveBlock(above);
+			//checkRemoveBlock(below);
 		}
 		else if (cubes[back]->texture == Cube::GRAY)
 		{
-			CheckBlockSides(back);
+			runBack = true;
 		}
 	}
 
 	//check above
 	//layer = (above / layerArea) + 1;
-	if (above < cubeVolume &&
+	if (above < cubeVolume && above > layerArea - 2 && // -2 or just -1 ?
 		cubes[above] != NULL)
 	{
 		if (cubes[above]->texture == Cube::MINE)
 		{
 			numOfMinesTouching++;
 			//return 0;
-			checkRemoveBlock(right);
-			checkRemoveBlock(forward);
-			checkRemoveBlock(back);
-			checkRemoveBlock(left);
-			checkRemoveBlock(below);
+			//checkRemoveBlock(right);
+			//checkRemoveBlock(forward);
+			//checkRemoveBlock(back);
+			//checkRemoveBlock(left);
+			//checkRemoveBlock(below);
 		}
 		else if (cubes[above]->texture == Cube::GRAY)
 		{
-			CheckBlockSides(above);
+			runAbove = true;
 		}
 	}
 
 	//check below
 	//layer = (above / layerArea) + 1;
-	if (below >= 0 &&
+	if (below >= 0 && below < (cubeVolume - layerArea) &&
 		cubes[below] != NULL)
 	{
 		if (cubes[below]->texture == Cube::MINE)
 		{
 			numOfMinesTouching++;
 			//return 0;
-			checkRemoveBlock(right);
-			checkRemoveBlock(forward);
-			checkRemoveBlock(back);
-			checkRemoveBlock(above);
-			checkRemoveBlock(left);
+			//checkRemoveBlock(right);
+			//checkRemoveBlock(forward);
+			//checkRemoveBlock(back);
+			//checkRemoveBlock(above);
+			//checkRemoveBlock(left);
 		}
 		else if (cubes[below]->texture == Cube::GRAY)
 		{
-			CheckBlockSides(below);
+			runBelow = true;
 		}
 	}
 
@@ -1509,5 +1607,34 @@ int Game::CheckBlockSides(int placeInArray)
 		break;
 
 	}
+
+	if (numOfMinesTouching == 0)
+	{
+		if (runRight)
+		{
+			CheckBlockSides(right);
+		}
+		if (runLeft)
+		{
+			CheckBlockSides(left);
+		}
+		if (runForward)
+		{
+			CheckBlockSides(forward);
+		}
+		if (runBack)
+		{
+			CheckBlockSides(back);
+		}
+		if (runAbove)
+		{
+			CheckBlockSides(above);
+		}
+		if (runBelow)
+		{
+			CheckBlockSides(below);
+		}
+	}
+
 	return 0;
 }
