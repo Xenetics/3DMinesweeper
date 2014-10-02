@@ -289,12 +289,15 @@ Game::~Game()
 	InputLayouts::DestroyAll();
 
 	//Clean up FMOD
-	//result = sound2->release();
-	//ERRCHECK(result);
+	result = sound1->release();
+	ERRCHECK(result);
+
 	result = music->release();
 	ERRCHECK(result);
+
 	result = system->close();
 	ERRCHECK(result);
+
 	result = system->release();
 	ERRCHECK(result);
 	
@@ -371,8 +374,8 @@ void Game::InitFMOD()
 	}
 	ERRCHECK(result);
 
-	//result = system->createSound("test2.ogg", FMOD_HARDWARE, 0, &sound2);
-	//ERRCHECK(result);
+	result = system->createSound("flag.mp3", FMOD_HARDWARE, 0, &sound1);
+	ERRCHECK(result);
 
 	result = system->createStream("music.mp3", FMOD_HARDWARE | FMOD_LOOP_NORMAL | FMOD_2D, 0, &music);
 	ERRCHECK(result);
@@ -1173,6 +1176,8 @@ void Game::Pick(int sx, int sy, int button)
 			else if (button == MK_RBUTTON)//swap is flagged state
 			{
 				cubes[place]->flagged = !cubes[place]->flagged;
+				result = system->playSound(FMOD_CHANNEL_FREE, sound1, false, &channel1);
+				ERRCHECK(result);
 			}
 		}
 	}
