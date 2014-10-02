@@ -38,18 +38,17 @@
 #include "fmod.hpp"
 #include "fmod_errors.h"
 
-//DEFINES BEUCASE FUCK LOOKING THROUGH FILEa
+//DEFINES
 #define EPSILON 0.00001
+//level sizes must be even numbers and less then 12
 #define SML_LVL_SIZE 4
 #define MED_LVL_SIZE 6
 #define LRG_LVL_SIZE 10
 
-#define SML_NUM_MINES 12
+#define SML_NUM_MINES 12 
 #define MED_NUM_MINES 28
 #define LRG_NUM_MINES 100
 
-
-#define FUNC_TIME_LENGTH 11
 #define SEED 2
 
 struct Cube
@@ -540,45 +539,7 @@ void Game::UpdateScene(float dt)
 		PostQuitMessage(0);
 	}
 
-	//win check
-	int minesFlagged = 0;
-	for (int i = 0; i < cubes.size(); i++)
-	{
-		if (cubes[i] != NULL)
-		{
-			if (cubes[i]->flagged == true && cubes[i]->texture == Cube::MINE)
-			{
-				minesFlagged++;
-			}
-		}
-	}
-	switch (levelHeight)
-	{
-	case SML_LVL_SIZE:
-		if (minesFlagged == SML_NUM_MINES)
-		{
-			MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
-			CleanLevel();
-			MakeLevel(levelWidth, levelHeight, levelLength);
-		}
-		break;
-	case MED_LVL_SIZE:
-		if (minesFlagged == MED_NUM_MINES)
-		{
-			MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
-			CleanLevel();
-			MakeLevel(levelWidth, levelHeight, levelLength);
-		}
-		break;
-	case LRG_LVL_SIZE:
-		if (minesFlagged == LRG_NUM_MINES)
-		{
-			MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
-			CleanLevel();
-			MakeLevel(levelWidth, levelHeight, levelLength);
-		}
-		break;
-	}
+
 }
 
 void Game::DrawScene()
@@ -1173,8 +1134,54 @@ void Game::Pick(int sx, int sy, int button)
 			else if (button == MK_RBUTTON)//swap is flagged state
 			{
 				cubes[place]->flagged = !cubes[place]->flagged;
+				
 			}
 		}
+		//win check
+		int minesFlagged = 0;
+		int grays = 0;
+		for (int i = 0; i < cubes.size(); i++)
+		{
+			if (cubes[i] != NULL)
+			{
+				if (cubes[i]->texture == Cube::GRAY)
+				{
+					grays++;
+				}
+				if (cubes[i]->flagged == true && cubes[i]->texture == Cube::MINE)
+				{
+					minesFlagged++;
+				}
+			}
+		}
+		switch (levelHeight)
+		{
+		case SML_LVL_SIZE:
+			if (minesFlagged == SML_NUM_MINES && grays == 0)
+			{
+				MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
+				CleanLevel();
+				MakeLevel(levelWidth, levelHeight, levelLength);
+			}
+			break;
+		case MED_LVL_SIZE:
+			if (minesFlagged == MED_NUM_MINES && grays == 0)
+			{
+				MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
+				CleanLevel();
+				MakeLevel(levelWidth, levelHeight, levelLength);
+			}
+			break;
+		case LRG_LVL_SIZE:
+			if (minesFlagged == LRG_NUM_MINES && grays == 0)
+			{
+				MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
+				CleanLevel();
+				MakeLevel(levelWidth, levelHeight, levelLength);
+			}
+			break;
+		}
+
 	}
 }
 
