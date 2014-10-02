@@ -465,7 +465,7 @@ void Game::OnResize()
 	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
 
-	mCam.SetLens(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+	mCam.SetLens(0.25f*MathHelper::Pi, AspectRatio(), 6.0f, 1000.0f);
 }
 
 void Game::UpdateScene(float dt)
@@ -867,11 +867,11 @@ void Game::OnMouseWheelMove(WPARAM btnState,int fwKeys, int zDelta, int x, int y
 
 		if (zDelta > 1 && length > 5) //mouse wheel up
 		{
-			mCam.Walk(1.0f);
+			mCam.Walk(0.5f);
 		}
 		else if (zDelta < 1 && length < 30) //mouse wheel down
 		{
-			mCam.Walk(-1.0f);
+			mCam.Walk(-0.5f);
 		}
 	}
 }
@@ -1369,13 +1369,14 @@ void Game::SetUpLevelData(int mines)
 
 int Game::CheckBlockSides(int placeInArray)
 {
+	/* draw thingy
 	while (funcTimer > 0)
 	{
 		DrawScene();
 		funcTimer -= FUNC_TIME_LENGTH;
 	}
 	funcTimer = 10;
-
+	*/
 
 
 
@@ -1634,6 +1635,10 @@ int Game::CheckBlockSides(int placeInArray)
 		{
 			CheckBlockSides(below);
 		}
+	}
+	else
+	{
+		DrawScene();
 	}
 
 	return 0;
