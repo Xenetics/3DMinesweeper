@@ -1136,7 +1136,9 @@ void Game::Pick(int sx, int sy, int button)
 			}
 			else if (button == MK_RBUTTON)//swap is flagged state
 			{
-				cubes[place]->flagged = !cubes[place]->flagged;				
+				cubes[place]->flagged = !cubes[place]->flagged;
+				result = system->playSound(FMOD_CHANNEL_FREE, sound1, false, &channel1);
+				ERRCHECK(result);
 			}
 		}
 		//win check
@@ -1154,8 +1156,6 @@ void Game::Pick(int sx, int sy, int button)
 				{
 					minesFlagged++;
 				}
-				result = system->playSound(FMOD_CHANNEL_FREE, sound1, false, &channel1);
-				ERRCHECK(result);
 			}
 		}
 		switch (levelHeight)
