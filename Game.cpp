@@ -138,7 +138,7 @@ private:
 	float mRadius;
 
 	POINT mLastMousePos;
-	int timer = 0;
+	int timer;
 	int whichIMG = 0;
 
 	// enum for difficulties
@@ -265,7 +265,7 @@ Game::Game(HINSTANCE hInstance)
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixTranslation(levelWidth*0.5f, levelLength * 0.5f, levelHeight * 0.5f));
 	mCam.SetPosition(0.0f, 0.0f, -15.0f);
 
-	
+	int timer = 0;
 }
 
 Game::~Game()
@@ -1107,6 +1107,7 @@ void Game::Pick(int sx, int sy, int button)
 
 			if (button == MK_LBUTTON && !cubes[place]->flagged)
 			{
+				timer++;
 				switch (cubes[place]->texture)
 				{
 				case Cube::GRAY:
@@ -1137,7 +1138,7 @@ void Game::Pick(int sx, int sy, int button)
 			else if (button == MK_RBUTTON)//swap is flagged state
 			{
 				cubes[place]->flagged = !cubes[place]->flagged;
-				result = system->playSound(FMOD_CHANNEL_FREE, sound1, false, &channel1);
+				result = system->playSound(FMOD_CHANNEL_FREE, sound1, false, &channel2);
 				ERRCHECK(result);
 			}
 		}
@@ -1163,7 +1164,7 @@ void Game::Pick(int sx, int sy, int button)
 		case SML_LVL_SIZE:
 			if (minesFlagged == SML_NUM_MINES && grays == 0)
 			{
-				MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
+				MessageBox(0, L"You Win in" L"timer" L"! The game will no reset.", L"Congratulations", MB_OK);
 				CleanLevel();
 				MakeLevel(levelWidth, levelHeight, levelLength);
 			}
