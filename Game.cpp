@@ -377,6 +377,9 @@ void Game::InitFMOD()
 	result = system->createSound("flag.mp3", FMOD_HARDWARE, 0, &sound1);
 	ERRCHECK(result);
 
+	result = system->createSound("victory.mp3", FMOD_HARDWARE, 0, &sound2);
+	ERRCHECK(result);
+
 	result = system->createStream("music.mp3", FMOD_HARDWARE | FMOD_LOOP_NORMAL | FMOD_2D, 0, &music);
 	ERRCHECK(result);
 
@@ -1161,40 +1164,53 @@ void Game::Pick(int sx, int sy, int button)
 		case SML_LVL_SIZE:
 			if (minesFlagged == SML_NUM_MINES && grays == 0)
 			{
+				result = system->playSound(FMOD_CHANNEL_FREE, sound2, false, &channel3);
+				ERRCHECK(result);
 				std::wstringstream out;
 				out << L"You Win in ";
 				out << timer;
 				out << "! The game will no reset.";
 				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
+				
 				CleanLevel();
 				timer = 0;
 				timerOn = false;
 				MakeLevel(levelWidth, levelHeight, levelLength);
+				
 			}
 			break;
 		case MED_LVL_SIZE:
 			if (minesFlagged == MED_NUM_MINES && grays == 0)
 			{
+				result = system->playSound(FMOD_CHANNEL_FREE, sound2, false, &channel3);
+				ERRCHECK(result);
 				std::wstringstream out;
 				out << L"You Win in ";
 				out << timer;
 				out << "! The game will no reset.";
 				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
+				
 				CleanLevel();
 				timer = 0;
 				timerOn = false;
 				MakeLevel(levelWidth, levelHeight, levelLength);
+
 			}
 			break;
 		case LRG_LVL_SIZE:
 			if (minesFlagged == LRG_NUM_MINES && grays == 0)
 			{
+				result = system->playSound(FMOD_CHANNEL_FREE, sound2, false, &channel3);
+				ERRCHECK(result);
 				std::wstringstream out;
 				out << L"You Win in ";
 				out << timer;
 				out << "! The game will no reset.";
 				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
+				
 				CleanLevel();
+				timer = 0;
+				timerOn = false;
 				MakeLevel(levelWidth, levelHeight, levelLength);
 			}
 			break;
