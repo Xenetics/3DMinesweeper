@@ -1162,7 +1162,7 @@ void Game::Pick(int sx, int sy, int button)
 			if (minesFlagged == SML_NUM_MINES && grays == 0)
 			{
 				std::wstringstream out;
-				out << L"You Win in";
+				out << L"You Win in ";
 				out << timer;
 				out << "! The game will no reset.";
 				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
@@ -1176,7 +1176,7 @@ void Game::Pick(int sx, int sy, int button)
 			if (minesFlagged == MED_NUM_MINES && grays == 0)
 			{
 				std::wstringstream out;
-				out << L"You Win in";
+				out << L"You Win in ";
 				out << timer;
 				out << "! The game will no reset.";
 				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
@@ -1190,7 +1190,7 @@ void Game::Pick(int sx, int sy, int button)
 			if (minesFlagged == LRG_NUM_MINES && grays == 0)
 			{
 				std::wstringstream out;
-				out << L"You Win in";
+				out << L"You Win in ";
 				out << timer;
 				out << "! The game will no reset.";
 				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
