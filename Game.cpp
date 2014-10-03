@@ -139,6 +139,7 @@ private:
 
 	POINT mLastMousePos;
 	float timer = 0;
+	bool timerOn = false;
 	int whichIMG = 0;
 
 	// enum for difficulties
@@ -540,6 +541,12 @@ void Game::UpdateScene(float dt)
 	if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) //exits the game
 	{
 		PostQuitMessage(0);
+	}
+
+	//game timer
+	if (timerOn)
+	{
+		timer += dt;
 	}
 
 
@@ -1093,10 +1100,11 @@ void Game::Pick(int sx, int sy, int button)
 			std::sort(cubesTouched.begin(), cubesTouched.end(), SortByVector);
 			int size = cubes.size();
 			int place = cubesTouched[0]->uniqueID;
+			//turn in the timer
+			timerOn = true;
 
 			if (button == MK_LBUTTON && !cubes[place]->flagged)
 			{
-				timer++;
 				switch (cubes[place]->texture)
 				{
 				case Cube::GRAY:
@@ -1159,6 +1167,8 @@ void Game::Pick(int sx, int sy, int button)
 				out << "! The game will no reset.";
 				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
 				CleanLevel();
+				timer = 0;
+				timerOn = false;
 				MakeLevel(levelWidth, levelHeight, levelLength);
 			}
 			break;
@@ -1171,6 +1181,8 @@ void Game::Pick(int sx, int sy, int button)
 				out << "! The game will no reset.";
 				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
 				CleanLevel();
+				timer = 0;
+				timerOn = false;
 				MakeLevel(levelWidth, levelHeight, levelLength);
 			}
 			break;
