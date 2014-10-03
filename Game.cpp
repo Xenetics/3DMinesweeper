@@ -45,7 +45,7 @@
 #define MED_LVL_SIZE 6
 #define LRG_LVL_SIZE 10
 
-#define SML_NUM_MINES 12 
+#define SML_NUM_MINES 12
 #define MED_NUM_MINES 28
 #define LRG_NUM_MINES 100
 
@@ -1164,7 +1164,7 @@ void Game::Pick(int sx, int sy, int button)
 		case SML_LVL_SIZE:
 			if (minesFlagged == SML_NUM_MINES && grays == 0)
 			{
-				MessageBox(0, L"You Win in" L"timer" L"! The game will no reset.", L"Congratulations", MB_OK);
+				MessageBox(0, L"You Win in! The game will no reset.", L"Congratulations", MB_OK);
 				CleanLevel();
 				MakeLevel(levelWidth, levelHeight, levelLength);
 			}
