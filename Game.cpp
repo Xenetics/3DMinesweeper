@@ -45,7 +45,7 @@
 #define MED_LVL_SIZE 6
 #define LRG_LVL_SIZE 10
 
-#define SML_NUM_MINES 12 
+#define SML_NUM_MINES 2
 #define MED_NUM_MINES 28
 #define LRG_NUM_MINES 100
 
@@ -138,7 +138,7 @@ private:
 	float mRadius;
 
 	POINT mLastMousePos;
-	int timer;
+	float timer = 0;
 	int whichIMG = 0;
 
 	// enum for difficulties
@@ -586,17 +586,6 @@ void Game::DrawScene()
 	activeTexTech->GetDesc( &techDesc );
     for(UINT p = 0; p < techDesc.Passes; ++p)
     {
-		//animate fire
-		timer++;
-		if (timer > 30)
-		{
-			timer = 0;
-			whichIMG++;
-			if (whichIMG > 119)
-			{
-				whichIMG = 0;
-			}
-		}
 		if (GetAsyncKeyState('1') & 0x8000)md3dImmediateContext->RSSetState(RenderStates::WireframeRS);
 
 		md3dImmediateContext->IASetVertexBuffers(0, 1, &mBoxVB, &stride, &offset);
@@ -1164,7 +1153,11 @@ void Game::Pick(int sx, int sy, int button)
 		case SML_LVL_SIZE:
 			if (minesFlagged == SML_NUM_MINES && grays == 0)
 			{
-				MessageBox(0, L"You Win in" L"timer" L"! The game will no reset.", L"Congratulations", MB_OK);
+				std::wstringstream out;
+				out << L"You Win in";
+				out << timer;
+				out << "! The game will no reset.";
+				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
 				CleanLevel();
 				MakeLevel(levelWidth, levelHeight, levelLength);
 			}
@@ -1172,7 +1165,11 @@ void Game::Pick(int sx, int sy, int button)
 		case MED_LVL_SIZE:
 			if (minesFlagged == MED_NUM_MINES && grays == 0)
 			{
-				MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
+				std::wstringstream out;
+				out << L"You Win in";
+				out << timer;
+				out << "! The game will no reset.";
+				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
 				CleanLevel();
 				MakeLevel(levelWidth, levelHeight, levelLength);
 			}
@@ -1180,7 +1177,11 @@ void Game::Pick(int sx, int sy, int button)
 		case LRG_LVL_SIZE:
 			if (minesFlagged == LRG_NUM_MINES && grays == 0)
 			{
-				MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
+				std::wstringstream out;
+				out << L"You Win in";
+				out << timer;
+				out << "! The game will no reset.";
+				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
 				CleanLevel();
 				MakeLevel(levelWidth, levelHeight, levelLength);
 			}
