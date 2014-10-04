@@ -29,6 +29,7 @@
 #include "Sky.h"
 #include "xnacollision.h"
 #include "RenderStates.h"
+#include "FileWriter.h"
 #include <string.h>
 #include <ostream>
 #include <sstream>
@@ -96,9 +97,11 @@ private:
 	void InitFMOD();
 	void UpdateSound();
 
-	float funcTimer = 10.0f;
-
 private:
+	float funcTimer = 10.0f;
+	
+	FileWriter highscoreFile;
+
 	Sky* mSky;
 
 	ID3D11Buffer* mBoxVB;
@@ -229,7 +232,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
  
 
 Game::Game(HINSTANCE hInstance)
-: D3DApp(hInstance), mSky(0), mBoxVB(0), mBoxIB(0), mEyePosW(0.0f, 0.0f, 0.0f), mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), mMeshIndexCount(0), mPickedTriangle(-1)
+: D3DApp(hInstance), mSky(0), mBoxVB(0), mBoxIB(0), mEyePosW(0.0f, 0.0f, 0.0f), mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), mMeshIndexCount(0), mPickedTriangle(-1),
+highscoreFile("Highscores.hst")
 {
 	//mDiffuseMapSRV3[0] = 0;
 	mMainWndCaption = L"3D Minesweeper";
@@ -259,7 +263,7 @@ Game::Game(HINSTANCE hInstance)
 
 	//-------------------
 	
-
+	
 	//XMMATRIX MeshScale = XMMatrixScaling(0.5f, 0.5f, 0.5f);
 	//XMMATRIX MeshOffset = XMMatrixTranslation(0.0f, 1.0f, 0.0f);
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixMultiply(MeshScale, MeshOffset));
@@ -267,6 +271,10 @@ Game::Game(HINSTANCE hInstance)
 	mCam.SetPosition(0.0f, 0.0f, -15.0f);
 
 	int timer = 0;
+
+	std::vector<std::string> smlScore = highscoreFile.ReadData("smlScore");
+	int jam = 0;
+	
 }
 
 Game::~Game()
