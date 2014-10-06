@@ -89,6 +89,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="FileWriter.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="d3dApp.cpp" />
     <ClCompile Include="d3dUtil.cpp" />
@@ -112,6 +113,7 @@
     <ClInclude Include="d3dx11effect.h" />
     <ClInclude Include="d3dxGlobal.h" />
     <ClInclude Include="Effects.h" />
+    <ClInclude Include="FileWriter.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="LightHelper.h" />

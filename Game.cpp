@@ -29,6 +29,7 @@
 #include "Sky.h"
 #include "xnacollision.h"
 #include "RenderStates.h"
+#include "FileWriter.h"
 #include <string.h>
 #include <ostream>
 #include <sstream>
@@ -38,18 +39,17 @@
 #include "fmod.hpp"
 #include "fmod_errors.h"
 
-//DEFINES BEUCASE FUCK LOOKING THROUGH FILEa
+//DEFINES
 #define EPSILON 0.00001
+//level sizes must be even numbers and less then 12
 #define SML_LVL_SIZE 4
 #define MED_LVL_SIZE 6
 #define LRG_LVL_SIZE 10
 
-#define SML_NUM_MINES 12
+#define SML_NUM_MINES 2
 #define MED_NUM_MINES 28
 #define LRG_NUM_MINES 100
 
-
-#define FUNC_TIME_LENGTH 11
 #define SEED 2
 
 struct Cube
@@ -97,7 +97,10 @@ private:
 	void InitFMOD();
 	void UpdateSound();
 
+private:
 	float funcTimer = 10.0f;
+	
+	FileWriter highscoreFile;
 
 	float smlHScore = 155.56467;
 	float midHScore = 152.67979;
@@ -143,7 +146,8 @@ private:
 	float mRadius;
 
 	POINT mLastMousePos;
-	int timer = 0;
+	float timer = 0;
+	bool timerOn = false;
 	int whichIMG = 0;
 
 	// enum for difficulties
@@ -158,7 +162,7 @@ private:
 	FMOD::System *system;
 	FMOD_RESULT result;
 	FMOD::Sound      *sound1, *sound2, *sound3, *music;
-	FMOD::Channel    *channel1, *channel2, *channel3, *musicChannel;
+	FMOD::Channel    *channel1, *channel2, *channel3, *channel4, *musicChannel;
 	int               key;
 	unsigned int      version;
 	bool musicIsPlaying = true;
@@ -233,7 +237,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
  
 
 Game::Game(HINSTANCE hInstance)
-: D3DApp(hInstance), mSky(0), mBoxVB(0), mBoxIB(0), mEyePosW(0.0f, 0.0f, 0.0f), mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), mMeshIndexCount(0), mPickedTriangle(-1)
+: D3DApp(hInstance), mSky(0), mBoxVB(0), mBoxIB(0), mEyePosW(0.0f, 0.0f, 0.0f), mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), mMeshIndexCount(0), mPickedTriangle(-1),
+highscoreFile("Highscores.hst")
 {
 	//mDiffuseMapSRV3[0] = 0;
 	mMainWndCaption = L"3D Minesweeper";
@@ -263,13 +268,17 @@ Game::Game(HINSTANCE hInstance)
 
 	//-------------------
 	
-
+	
 	//XMMATRIX MeshScale = XMMatrixScaling(0.5f, 0.5f, 0.5f);
 	//XMMATRIX MeshOffset = XMMatrixTranslation(0.0f, 1.0f, 0.0f);
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixMultiply(MeshScale, MeshOffset));
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixTranslation(levelWidth*0.5f, levelLength * 0.5f, levelHeight * 0.5f));
 	mCam.SetPosition(0.0f, 0.0f, -15.0f);
 
+	int timer = 0;
+
+	std::vector<std::string> smlScore = highscoreFile.ReadData("smlScore");
+	int jam = 0;
 	
 }
 
@@ -294,6 +303,9 @@ Game::~Game()
 
 	//Clean up FMOD
 	result = sound1->release();
+	ERRCHECK(result);
+
+	result = sound2->release();
 	ERRCHECK(result);
 
 	result = music->release();
@@ -379,6 +391,12 @@ void Game::InitFMOD()
 	ERRCHECK(result);
 
 	result = system->createSound("flag.mp3", FMOD_HARDWARE, 0, &sound1);
+	ERRCHECK(result);
+
+	result = system->createSound("victory.mp3", FMOD_HARDWARE, 0, &sound2);
+	ERRCHECK(result);
+
+	result = system->createSound("boom.mp3", FMOD_HARDWARE, 0, &sound3);
 	ERRCHECK(result);
 
 	result = system->createStream("music.mp3", FMOD_HARDWARE | FMOD_LOOP_NORMAL | FMOD_2D, 0, &music);
@@ -560,45 +578,13 @@ void Game::UpdateScene(float dt)
 		PostQuitMessage(0);
 	}
 
-	//win check
-	int minesFlagged = 0;
-	for (int i = 0; i < cubes.size(); i++)
+	//game timer
+	if (timerOn)
 	{
-		if (cubes[i] != NULL)
-		{
-			if (cubes[i]->flagged == true && cubes[i]->texture == Cube::MINE)
-			{
-				minesFlagged++;
-			}
-		}
+		timer += dt;
 	}
-	switch (levelHeight)
-	{
-	case SML_LVL_SIZE:
-		if (minesFlagged == SML_NUM_MINES)
-		{
-			MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
-			CleanLevel();
-			MakeLevel(levelWidth, levelHeight, levelLength);
-		}
-		break;
-	case MED_LVL_SIZE:
-		if (minesFlagged == MED_NUM_MINES)
-		{
-			MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
-			CleanLevel();
-			MakeLevel(levelWidth, levelHeight, levelLength);
-		}
-		break;
-	case LRG_LVL_SIZE:
-		if (minesFlagged == LRG_NUM_MINES)
-		{
-			MessageBox(0, L"You Win! The game will no reset.", L"Congratulations", MB_OK);
-			CleanLevel();
-			MakeLevel(levelWidth, levelHeight, levelLength);
-		}
-		break;
-	}
+
+
 }
 
 void Game::DrawScene()
@@ -642,17 +628,6 @@ void Game::DrawScene()
 	activeTexTech->GetDesc( &techDesc );
     for(UINT p = 0; p < techDesc.Passes; ++p)
     {
-		//animate fire
-		timer++;
-		if (timer > 30)
-		{
-			timer = 0;
-			whichIMG++;
-			if (whichIMG > 119)
-			{
-				whichIMG = 0;
-			}
-		}
 		if (GetAsyncKeyState('1') & 0x8000)md3dImmediateContext->RSSetState(RenderStates::WireframeRS);
 
 		md3dImmediateContext->IASetVertexBuffers(0, 1, &mBoxVB, &stride, &offset);
@@ -1196,6 +1171,8 @@ void Game::Pick(int sx, int sy, int button)
 			std::sort(cubesTouched.begin(), cubesTouched.end(), SortByVector);
 			int size = cubes.size();
 			int place = cubesTouched[0]->uniqueID;
+			//turn in the timer
+			timerOn = true;
 
 			if (button == MK_LBUTTON && !cubes[place]->flagged)
 			{
@@ -1221,6 +1198,8 @@ void Game::Pick(int sx, int sy, int button)
 					//cubes.erase(cubes.begin() + place);
 					break;
 				case Cube::MINE:
+					result = system->playSound(FMOD_CHANNEL_FREE, sound3, false, &channel4);
+					ERRCHECK(result);
 					CleanLevel();
 					MakeLevel(levelWidth, levelHeight, levelLength);
 					break;
@@ -1229,10 +1208,85 @@ void Game::Pick(int sx, int sy, int button)
 			else if (button == MK_RBUTTON)//swap is flagged state
 			{
 				cubes[place]->flagged = !cubes[place]->flagged;
-				result = system->playSound(FMOD_CHANNEL_FREE, sound1, false, &channel1);
+				result = system->playSound(FMOD_CHANNEL_FREE, sound1, false, &channel2);
 				ERRCHECK(result);
 			}
 		}
+		//win check
+		int minesFlagged = 0;
+		int grays = 0;
+		for (int i = 0; i < cubes.size(); i++)
+		{
+			if (cubes[i] != NULL)
+			{
+				if (cubes[i]->texture == Cube::GRAY)
+				{
+					grays++;
+				}
+				if (cubes[i]->flagged == true && cubes[i]->texture == Cube::MINE)
+				{
+
+					minesFlagged++;
+				}
+			}
+		}
+		switch (levelHeight)
+		{
+		case SML_LVL_SIZE:
+			if (minesFlagged == SML_NUM_MINES && grays == 0)
+			{
+				result = system->playSound(FMOD_CHANNEL_FREE, sound2, false, &channel3);
+				ERRCHECK(result);
+				std::wstringstream out;
+				out << L"You Win in ";
+				out << timer;
+				out << "! The game will no reset.";
+				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
+				
+				CleanLevel();
+				timer = 0;
+				timerOn = false;
+				MakeLevel(levelWidth, levelHeight, levelLength);
+				
+			}
+			break;
+		case MED_LVL_SIZE:
+			if (minesFlagged == MED_NUM_MINES && grays == 0)
+			{
+				result = system->playSound(FMOD_CHANNEL_FREE, sound2, false, &channel3);
+				ERRCHECK(result);
+				std::wstringstream out;
+				out << L"You Win in ";
+				out << timer;
+				out << "! The game will no reset.";
+				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
+				
+				CleanLevel();
+				timer = 0;
+				timerOn = false;
+				MakeLevel(levelWidth, levelHeight, levelLength);
+
+			}
+			break;
+		case LRG_LVL_SIZE:
+			if (minesFlagged == LRG_NUM_MINES && grays == 0)
+			{
+				result = system->playSound(FMOD_CHANNEL_FREE, sound2, false, &channel3);
+				ERRCHECK(result);
+				std::wstringstream out;
+				out << L"You Win in ";
+				out << timer;
+				out << "! The game will no reset.";
+				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
+				
+				CleanLevel();
+				timer = 0;
+				timerOn = false;
+				MakeLevel(levelWidth, levelHeight, levelLength);
+			}
+			break;
+		}
+
 	}
 }
 
@@ -1424,6 +1478,7 @@ void Game::CreateMenu()
 
 void Game::CleanLevel()
 {
+
 	cubes.clear();
 	isLevelSet = false;
 }
@@ -1660,6 +1715,7 @@ int Game::CheckBlockSides(int placeInArray)
 	{
 		if (cubes[back]->texture == Cube::MINE)
 		{
+			
 			numOfMinesTouching++;
 			//return 0; 
 			//checkRemoveBlock(right);
@@ -1712,6 +1768,7 @@ int Game::CheckBlockSides(int placeInArray)
 		}
 		else if (cubes[below]->texture == Cube::GRAY)
 		{
+
 			runBelow = true;
 		}
 	}

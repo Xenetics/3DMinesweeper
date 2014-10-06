@@ -63,7 +63,7 @@
     <ClCompile Include="Sky.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MHGameTimer.cpp">
+    <ClCompile Include="FileWriter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -116,7 +116,7 @@
     <ClInclude Include="Sky.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MHGameTimer.h">
+    <ClInclude Include="FileWriter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
