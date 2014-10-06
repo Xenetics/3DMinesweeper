@@ -157,7 +157,7 @@ private:
 	FMOD::System *system;
 	FMOD_RESULT result;
 	FMOD::Sound      *sound1, *sound2, *sound3, *music;
-	FMOD::Channel    *channel1, *channel2, *channel3, *musicChannel;
+	FMOD::Channel    *channel1, *channel2, *channel3, *channel4, *musicChannel;
 	int               key;
 	unsigned int      version;
 	bool musicIsPlaying = true;
@@ -300,6 +300,9 @@ Game::~Game()
 	result = sound1->release();
 	ERRCHECK(result);
 
+	result = sound2->release();
+	ERRCHECK(result);
+
 	result = music->release();
 	ERRCHECK(result);
 
@@ -386,6 +389,9 @@ void Game::InitFMOD()
 	ERRCHECK(result);
 
 	result = system->createSound("victory.mp3", FMOD_HARDWARE, 0, &sound2);
+	ERRCHECK(result);
+
+	result = system->createSound("boom.mp3", FMOD_HARDWARE, 0, &sound3);
 	ERRCHECK(result);
 
 	result = system->createStream("music.mp3", FMOD_HARDWARE | FMOD_LOOP_NORMAL | FMOD_2D, 0, &music);
@@ -1138,6 +1144,8 @@ void Game::Pick(int sx, int sy, int button)
 					//cubes.erase(cubes.begin() + place);
 					break;
 				case Cube::MINE:
+					result = system->playSound(FMOD_CHANNEL_FREE, sound3, false, &channel4);
+					ERRCHECK(result);
 					CleanLevel();
 					MakeLevel(levelWidth, levelHeight, levelLength);
 					break;
@@ -1163,6 +1171,7 @@ void Game::Pick(int sx, int sy, int button)
 				}
 				if (cubes[i]->flagged == true && cubes[i]->texture == Cube::MINE)
 				{
+
 					minesFlagged++;
 				}
 			}
@@ -1336,6 +1345,7 @@ void Game::CreateMenu()
 
 void Game::CleanLevel()
 {
+
 	cubes.clear();
 	isLevelSet = false;
 }
@@ -1572,6 +1582,7 @@ int Game::CheckBlockSides(int placeInArray)
 	{
 		if (cubes[back]->texture == Cube::MINE)
 		{
+			
 			numOfMinesTouching++;
 			//return 0; 
 			//checkRemoveBlock(right);
@@ -1624,6 +1635,7 @@ int Game::CheckBlockSides(int placeInArray)
 		}
 		else if (cubes[below]->texture == Cube::GRAY)
 		{
+
 			runBelow = true;
 		}
 	}
