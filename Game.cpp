@@ -99,6 +99,10 @@ private:
 
 	float funcTimer = 10.0f;
 
+	float smlHScore = 155.56467;
+	float midHScore = 152.67979;
+	float lrgHScore = 157.78789;
+
 private:
 	Sky* mSky;
 
@@ -110,8 +114,8 @@ private:
 	//ID3D11ShaderResourceView* mDiffuseMapSRV3[120];
 	//ID3D11ShaderResourceView* mDiffuseMapSRV4;
 	//ID3D11ShaderResourceView* mDiffuseMapSRV5;
-	ID3D11ShaderResourceView* mDiffuseMapSRVMenuButtons[12];
-	enum menuButtons {LOGOb,PLAYb,EASYb,EASYbOn,MEDIUMb,MEDIUMbOn,HARDb,HARDbOn,EXITb,SOUNDb,SOUNDbOff,MUSICb,MUSICbOff};
+	ID3D11ShaderResourceView* mDiffuseMapSRVMenuButtons[25];
+	enum menuButtons {LOGOb,PLAYb,EASYb,EASYbOn,MEDIUMb,MEDIUMbOn,HARDb,HARDbOn,EXITb,SOUNDb,SOUNDbOff,MUSICb,MUSICbOff,HIGHSCOREb,HSDIGITb0,HSDIGITb1,HSDIGITb2,HSDIGITb3,HSDIGITb4,HSDIGITb5,HSDIGITb6,HSDIGITb7,HSDIGITb8,HSDIGITb9,HSDOTb};
 	menuButtons button;
 
 	LPCTSTR num;
@@ -411,6 +415,19 @@ void Game::InitTextures()
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/soundfxoff.png", 0, 0, &mDiffuseMapSRVMenuButtons[10], 0)); //SOUND
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/musicon.png", 0, 0, &mDiffuseMapSRVMenuButtons[11], 0)); //MUSIC
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/musicoff.png", 0, 0, &mDiffuseMapSRVMenuButtons[12], 0)); //MUSIC
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/highscore.png", 0, 0, &mDiffuseMapSRVMenuButtons[13], 0)); //HIGHSCORE
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#0.png", 0, 0, &mDiffuseMapSRVMenuButtons[14], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#1.png", 0, 0, &mDiffuseMapSRVMenuButtons[15], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#2.png", 0, 0, &mDiffuseMapSRVMenuButtons[16], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#3.png", 0, 0, &mDiffuseMapSRVMenuButtons[17], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#4.png", 0, 0, &mDiffuseMapSRVMenuButtons[18], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#5.png", 0, 0, &mDiffuseMapSRVMenuButtons[19], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#6.png", 0, 0, &mDiffuseMapSRVMenuButtons[20], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#7.png", 0, 0, &mDiffuseMapSRVMenuButtons[21], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#8.png", 0, 0, &mDiffuseMapSRVMenuButtons[22], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#9.png", 0, 0, &mDiffuseMapSRVMenuButtons[23], 0)); //HIGHSCORE DIGIT
+	//HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HSDOT.png", 0, 0, &mDiffuseMapSRVMenuButtons[24], 0)); //HIGHSCORE DIGIT
+
 
 	//Game Textures
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/MetalBox.jpg", 0, 0, &mDiffuseMapSRVBoxTypes[0], 0));
@@ -789,6 +806,42 @@ void Game::DrawScene()
 						break;
 					case MUSICbOff:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[12]);
+						break;
+					case HIGHSCOREb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[13]);
+						break;
+					case HSDIGITb0:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[14]);
+						break;
+					case HSDIGITb1:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[15]);
+						break;
+					case HSDIGITb2:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[16]);
+						break;
+					case HSDIGITb3:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[17]);
+						break;
+					case HSDIGITb4:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[18]);
+						break;
+					case HSDIGITb5:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[19]);
+						break;
+					case HSDIGITb6:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[20]);
+						break;
+					case HSDIGITb7:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[21]);
+						break;
+					case HSDIGITb8:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[22]);
+						break;
+					case HSDIGITb9:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[23]);
+						break;
+					case HSDOTb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[24]);
 						break;
 					}
 					activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
@@ -1200,8 +1253,8 @@ void Game::CreateMenu()
 
 	//PLAY BUTTON
 	Cube * playButton = new Cube;
-	playButton->pos = XMVectorSet(0, -1, 5, 1);
-	playButton->originPos = XMVectorSet(0, -1, 5, 1);
+	playButton->pos = XMVectorSet(0, -6, 5, 1);
+	playButton->originPos = XMVectorSet(0, -6, 5, 1);
 	playButton->scale = XMVectorSet(10.0f, 2.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&playButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(playButton->scale), XMMatrixTranslationFromVector(playButton->pos)));
 	XMStoreFloat3(&playButton->mMeshBox.Center, playButton->pos);
@@ -1211,6 +1264,85 @@ void Game::CreateMenu()
 	playButton->isMenu = true;
 	Game::cubes.push_back(playButton); 
 
+	//highScore
+	Cube * highScore = new Cube;
+	highScore->pos = XMVectorSet(0, 2, 5, 1);
+	highScore->originPos = XMVectorSet(0, 2, 5, 1);
+	highScore->scale = XMVectorSet(10.0f, 0.5f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&highScore->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(highScore->scale), XMMatrixTranslationFromVector(highScore->pos)));
+	XMStoreFloat3(&highScore->mMeshBox.Center, highScore->pos);
+	XMVECTOR HShalfSize = XMVectorSet(5.0f, 0.25f, 0.5f, 1.0f);
+	XMStoreFloat3(&highScore->mMeshBox.Extents, HShalfSize);
+	highScore->menuTexture = HIGHSCOREb;
+	highScore->isMenu = true;
+	Game::cubes.push_back(highScore);
+
+	//SINGLE DIGIT SCORE BOX
+	for (int i = 0; i < 5; i++)
+	{
+		std::stringstream toDraw;
+		toDraw << smlHScore;
+		int numToDraw = toDraw.str()[i] + 14 - 48;
+		//if (toDraw.str()[i] == 46)
+			//numToDraw = HSDOTb;
+
+		Cube * scoreDigit = new Cube;
+		scoreDigit->pos = XMVectorSet(-10+i*1.1, -1, 5, 1);
+		scoreDigit->originPos = XMVectorSet(0, -1, 5, 1);
+		scoreDigit->scale = XMVectorSet(1.0f, 1.2f, 1.0f, 1.0f);
+		XMStoreFloat4x4(&scoreDigit->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(scoreDigit->scale), XMMatrixTranslationFromVector(scoreDigit->pos)));
+		XMStoreFloat3(&scoreDigit->mMeshBox.Center, scoreDigit->pos);
+		XMVECTOR SDhalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f);
+		XMStoreFloat3(&scoreDigit->mMeshBox.Extents, SDhalfSize);
+		scoreDigit->menuTexture = numToDraw;
+		scoreDigit->isMenu = true;
+		Game::cubes.push_back(scoreDigit);
+	}
+
+	//SINGLE DIGIT SCORE BOX
+	for (int i = 0; i < 5; i++)
+	{
+		std::stringstream toDraw;
+		toDraw << midHScore;//change this to the float you want to draw
+		int numToDraw = toDraw.str()[i] + 14 - 48;
+		//if (toDraw.str()[i] == 46)
+		//numToDraw = HSDOTb;
+
+		Cube * scoreDigit = new Cube;
+		scoreDigit->pos = XMVectorSet(-2 + i*1.1, -1, 5, 1);
+		scoreDigit->originPos = XMVectorSet(0, -1, 5, 1);
+		scoreDigit->scale = XMVectorSet(1.0f, 1.2f, 1.0f, 1.0f);
+		XMStoreFloat4x4(&scoreDigit->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(scoreDigit->scale), XMMatrixTranslationFromVector(scoreDigit->pos)));
+		XMStoreFloat3(&scoreDigit->mMeshBox.Center, scoreDigit->pos);
+		XMVECTOR SDhalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f);
+		XMStoreFloat3(&scoreDigit->mMeshBox.Extents, SDhalfSize);
+		scoreDigit->menuTexture = numToDraw;
+		scoreDigit->isMenu = true;
+		Game::cubes.push_back(scoreDigit);
+	}
+
+	//SINGLE DIGIT SCORE BOX
+	for (int i = 0; i < 5; i++)
+	{
+		std::stringstream toDraw;
+		toDraw << lrgHScore;//change this to the float you want to draw
+		int numToDraw = toDraw.str()[i] + 14 - 48;
+		//if (toDraw.str()[i] == 46)
+		//numToDraw = HSDOTb;
+
+		Cube * scoreDigit = new Cube;
+		scoreDigit->pos = XMVectorSet(5 + i*1.1, -1, 5, 1);
+		scoreDigit->originPos = XMVectorSet(0, -1, 5, 1);
+		scoreDigit->scale = XMVectorSet(1.0f, 1.2f, 1.0f, 1.0f);
+		XMStoreFloat4x4(&scoreDigit->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(scoreDigit->scale), XMMatrixTranslationFromVector(scoreDigit->pos)));
+		XMStoreFloat3(&scoreDigit->mMeshBox.Center, scoreDigit->pos);
+		XMVECTOR SDhalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f);
+		XMStoreFloat3(&scoreDigit->mMeshBox.Extents, SDhalfSize);
+		scoreDigit->menuTexture = numToDraw;
+		scoreDigit->isMenu = true;
+		Game::cubes.push_back(scoreDigit);
+	}
+	
 	// EASY BUTTON
 	Cube * easyButton = new Cube;
 	easyButton->pos = XMVectorSet(-7, 3, 5, 1);

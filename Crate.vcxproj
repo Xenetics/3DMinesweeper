@@ -97,6 +97,7 @@
     <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="LightHelper.cpp" />
     <ClCompile Include="MathHelper.cpp" />
+    <ClCompile Include="MHGameTimer.cpp" />
     <ClCompile Include="RenderStates.cpp" />
     <ClCompile Include="Sky.cpp" />
     <ClCompile Include="TextureMgr.cpp" />
@@ -115,6 +116,7 @@
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="LightHelper.h" />
     <ClInclude Include="MathHelper.h" />
+    <ClInclude Include="MHGameTimer.h" />
     <ClInclude Include="RenderStates.h" />
     <ClInclude Include="Sky.h" />
     <ClInclude Include="TextureMgr.h" />
