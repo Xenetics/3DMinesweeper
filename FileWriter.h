@@ -18,11 +18,11 @@ using std::string;
 class FileWriter
 {
 public:
-	FileWriter(string filename);
-	~FileWriter();
+	FileWriter(string name);
 
 	std::vector<std::string> ReadData(std::string token);
+	void WriteData(std::string token, std::string data);
 private:
-	std::ifstream file;
+	std::string filename;
 };
 

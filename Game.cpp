@@ -42,13 +42,13 @@
 //DEFINES
 #define EPSILON 0.00001
 //level sizes must be even numbers and less then 12
-#define SML_LVL_SIZE 4
-#define MED_LVL_SIZE 6
+#define SML_LVL_SIZE 6
+#define MED_LVL_SIZE 8
 #define LRG_LVL_SIZE 10
 
-#define SML_NUM_MINES 2
-#define MED_NUM_MINES 28
-#define LRG_NUM_MINES 100
+#define SML_NUM_MINES 28
+#define MED_NUM_MINES 52
+#define LRG_NUM_MINES 140
 
 #define SEED 2
 
@@ -263,7 +263,8 @@ highscoreFile("Highscores.hst")
 	mPickedTriangleMat.Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
 	mPickedTriangleMat.Reflect	= XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	
-	srand(SEED);//time(NULL));
+	//srand(SEED);
+	srand(time(NULL));
 	//MakeLevel(5, 5, 5); //makes the cube of blocks.
 	
 
@@ -277,10 +278,10 @@ highscoreFile("Highscores.hst")
 	mCam.SetPosition(0.0f, 0.0f, -15.0f);
 
 	int timer = 0;
+	highscoreFile.WriteData("smlScore", "OHHHHHHHHHHHH_BB");
 
 	std::vector<std::string> smlScore = highscoreFile.ReadData("smlScore");
 	int jam = 0;
-	
 }
 
 Game::~Game()
