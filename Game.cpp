@@ -166,6 +166,7 @@ private:
 	int               key;
 	unsigned int      version;
 	bool musicIsPlaying = true;
+	bool soundIsPlaying = true;
 
 public:
 	// Define transformations from local spaces to world space.
@@ -306,6 +307,9 @@ Game::~Game()
 	ERRCHECK(result);
 
 	result = sound2->release();
+	ERRCHECK(result);
+
+	result = sound3->release();
 	ERRCHECK(result);
 
 	result = music->release();
@@ -1153,7 +1157,11 @@ void Game::Pick(int sx, int sy, int button)
 						PostQuitMessage(0);
 						break;
 					case SOUNDb:
-
+						soundIsPlaying = !soundIsPlaying;
+						channel1->setMute(soundIsPlaying);
+						channel2->setMute(soundIsPlaying);
+						channel3->setMute(soundIsPlaying);
+						channel4->setMute(soundIsPlaying);
 						break;
 					case MUSICb:
 						musicIsPlaying = !musicIsPlaying;
