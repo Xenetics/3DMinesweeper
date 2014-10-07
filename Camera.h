@@ -65,6 +65,7 @@ public:
 	// Rotate the camera.
 	void Pitch(float angle);
 	void RotateY(float angle);
+	void Roll(float angle);
 
 	//Orbit the camera.
 	void OrbitHorizontal(float angle);

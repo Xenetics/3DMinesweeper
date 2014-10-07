@@ -192,19 +192,36 @@ void Camera::Pitch(float angle)
 	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), R));
 }
 
-void Camera::RotateY(float angle)
+void Camera::RotateY(float angle) 
 {
 	// Rotate the basis vectors about the world y-axis.
-
 	XMMATRIX R = XMMatrixRotationY(angle);
 
 	XMStoreFloat3(&mRight,   XMVector3TransformNormal(XMLoadFloat3(&mRight), R));
 	XMStoreFloat3(&mUp, XMVector3TransformNormal(XMLoadFloat3(&mUp), R));
 	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), R));
+
+	
 }
 
-void Camera::OrbitHorizontal(float angle)
+void Camera::Roll(float angle)
 {
+	// Rotate up and Right vector about the Look vector.
+
+	XMMATRIX R = XMMatrixRotationAxis(XMVector3Cross(XMLoadFloat3(&mUp), XMLoadFloat3(&mRight)), angle);
+
+	XMStoreFloat3(&mUp, XMVector3TransformNormal(XMLoadFloat3(&mUp), R));
+	XMStoreFloat3(&mRight, XMVector3TransformNormal(XMLoadFloat3(&mLook), R));
+}
+
+void Camera::OrbitHorizontal(float angle)//mostly right (may i need to change the rotation along the mLook vector too?)
+{
+	//get the angle between the up of the camera and the up of the world
+
+	//pitch the camaera by that angle
+	XMVECTOR offsetAngle = XMVector3AngleBetweenVectors(XMLoadFloat3(&XMFLOAT3(0.0, 1.0, 0.0)),  XMLoadFloat3(&mUp) );
+	Pitch(XMVectorGetX(offsetAngle) + 0.001f);
+
 	XMMATRIX matrixRot = XMMatrixRotationY(angle); //add rotation to the matrix
 
 	XMStoreFloat3(&mPosition, XMVector3TransformNormal(XMLoadFloat3(&mPosition), matrixRot));
@@ -212,13 +229,29 @@ void Camera::OrbitHorizontal(float angle)
 	//XMStoreFloat3(&mLook, lookVector);
 	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), matrixRot));
 	//XMStoreFloat3(&mUp, XMVector3TransformNormal(XMLoadFloat3(&mUp), matrixRot));
+
+
+	//look at the center
+	XMFLOAT3 zero(0.01, 0.01, 0.01);
+	LookAt(mPosition, zero, XMFLOAT3(0.0, 1.0, 0.0));
 }
 
 void Camera::OrbitVertical(float angle)
 {
+	//get the angle between the right? of the camera and the right? of the world
+
+	//pitch the camaera by that angle
+	XMVECTOR offsetAngle = XMVector3AngleBetweenVectors(XMLoadFloat3(&XMFLOAT3(1.0, 0.0, 0.0)), XMLoadFloat3(&mRight));
+	RotateY(XMVectorGetX(offsetAngle) + 0.001f);
+
 	XMMATRIX matrixRot = XMMatrixRotationX(angle);
 	XMStoreFloat3(&mPosition, XMVector3TransformNormal(XMLoadFloat3(&mPosition), matrixRot));
-	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), matrixRot));
+	XMStoreFloat3(&mRight, XMVector3TransformNormal(XMLoadFloat3(&mRight), matrixRot));
+
+	//look at the center
+	XMFLOAT3 zero(0.01, 0.01, 0.01);
+	LookAt(mPosition, zero, XMFLOAT3(0.0, 1.0, 0.0));
+	
 }
 
 void Camera::UpdateViewMatrix()

@@ -1,12 +1,22 @@
-//***************************************************************************************
-// TODO SHAD: add new menu button texture images in the initTextures function.
-//
-//
-// 
-//		
-//      
-//
-//***************************************************************************************
+/***************************************************************************************\
+ GENERAL TODO:
+	Need way to go back to main menu from game
+	timer
+
+ 
+ 
+ 
+ TODO SHAD: 
+	-add new menu button texture images in the initTextures function.
+
+
+ 
+	
+      
+ NOTES FOR ALEX:
+
+	
+\***************************************************************************************/
 
 #include "d3dApp.h"
 #include "d3dx11Effect.h"
@@ -19,6 +29,7 @@
 #include "Sky.h"
 #include "xnacollision.h"
 #include "RenderStates.h"
+#include "FileWriter.h"
 #include <string.h>
 #include <ostream>
 #include <sstream>
@@ -28,15 +39,28 @@
 #include "fmod.hpp"
 #include "fmod_errors.h"
 
+//DEFINES
 #define EPSILON 0.00001
+//level sizes must be even numbers and less then 12
+#define SML_LVL_SIZE 6
+#define MED_LVL_SIZE 8
+#define LRG_LVL_SIZE 10
+
+#define SML_NUM_MINES 28
+#define MED_NUM_MINES 52
+#define LRG_NUM_MINES 140
+
+#define SEED 2
 
 struct Cube
 {
 	XMVECTOR pos;
 	XMVECTOR originPos;
 	XMVECTOR scale;
+	bool flagged = false;
 	enum cubeTextures {EMPTY,GRAY,MINE,ONE,TWO,THREE,FOUR,FIVE,SIX,FLAG};
 	cubeTextures texture = GRAY;
+
 	UINT menuTexture;
 	XNA::AxisAlignedBox mMeshBox;
 	bool isMenu = false;
@@ -63,7 +87,7 @@ public:
 	void OnMouseMove(WPARAM btnState, int x, int y);
 	void OnMouseWheelMove(WPARAM btnState,int fwKeys, int zDelta, int x, int y);
 	void MakeLevel(UINT width, UINT length, UINT height);
-	void Pick(int sx, int sy);
+	void Pick(int sx, int sy, int button);
 	void MenuLighting();
 	void GameLighting();
 
@@ -72,6 +96,15 @@ private:
 
 	void InitFMOD();
 	void UpdateSound();
+
+private:
+	float funcTimer = 10.0f;
+	
+	FileWriter highscoreFile;
+
+	float smlHScore = 155.56467;
+	float midHScore = 152.67979;
+	float lrgHScore = 157.78789;
 
 private:
 	Sky* mSky;
@@ -84,8 +117,8 @@ private:
 	//ID3D11ShaderResourceView* mDiffuseMapSRV3[120];
 	//ID3D11ShaderResourceView* mDiffuseMapSRV4;
 	//ID3D11ShaderResourceView* mDiffuseMapSRV5;
-	ID3D11ShaderResourceView* mDiffuseMapSRVMenuButtons[12];
-	enum menuButtons {LOGOb,PLAYb,EASYb,EASYbOn,MEDIUMb,MEDIUMbOn,HARDb,HARDbOn,EXITb,SOUNDb,SOUNDbOff,MUSICb,MUSICbOff};
+	ID3D11ShaderResourceView* mDiffuseMapSRVMenuButtons[25];
+	enum menuButtons {LOGOb,PLAYb,EASYb,EASYbOn,MEDIUMb,MEDIUMbOn,HARDb,HARDbOn,EXITb,SOUNDb,SOUNDbOff,MUSICb,MUSICbOff,HIGHSCOREb,HSDIGITb0,HSDIGITb1,HSDIGITb2,HSDIGITb3,HSDIGITb4,HSDIGITb5,HSDIGITb6,HSDIGITb7,HSDIGITb8,HSDIGITb9,HSDOTb};
 	menuButtons button;
 
 	LPCTSTR num;
@@ -113,7 +146,8 @@ private:
 	float mRadius;
 
 	POINT mLastMousePos;
-	int timer = 0;
+	float timer = 0;
+	bool timerOn = false;
 	int whichIMG = 0;
 
 	// enum for difficulties
@@ -128,10 +162,11 @@ private:
 	FMOD::System *system;
 	FMOD_RESULT result;
 	FMOD::Sound      *sound1, *sound2, *sound3, *music;
-	FMOD::Channel    *channel1, *channel2, *channel3, *musicChannel;
+	FMOD::Channel    *channel1, *channel2, *channel3, *channel4, *musicChannel;
 	int               key;
 	unsigned int      version;
 	bool musicIsPlaying = true;
+	bool soundIsPlaying = true;
 
 public:
 	// Define transformations from local spaces to world space.
@@ -203,7 +238,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
  
 
 Game::Game(HINSTANCE hInstance)
-: D3DApp(hInstance), mSky(0), mBoxVB(0), mBoxIB(0), mEyePosW(0.0f, 0.0f, 0.0f), mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), mMeshIndexCount(0), mPickedTriangle(-1)
+: D3DApp(hInstance), mSky(0), mBoxVB(0), mBoxIB(0), mEyePosW(0.0f, 0.0f, 0.0f), mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), mMeshIndexCount(0), mPickedTriangle(-1),
+highscoreFile("Highscores.hst")
 {
 	//mDiffuseMapSRV3[0] = 0;
 	mMainWndCaption = L"3D Minesweeper";
@@ -227,20 +263,25 @@ Game::Game(HINSTANCE hInstance)
 	mPickedTriangleMat.Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
 	mPickedTriangleMat.Reflect	= XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	
-//srand(time(NULL));
+	//srand(SEED);
+	srand(time(NULL));
 	//MakeLevel(5, 5, 5); //makes the cube of blocks.
 	
 
 	//-------------------
 	
-
+	
 	//XMMATRIX MeshScale = XMMatrixScaling(0.5f, 0.5f, 0.5f);
 	//XMMATRIX MeshOffset = XMMatrixTranslation(0.0f, 1.0f, 0.0f);
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixMultiply(MeshScale, MeshOffset));
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixTranslation(levelWidth*0.5f, levelLength * 0.5f, levelHeight * 0.5f));
 	mCam.SetPosition(0.0f, 0.0f, -15.0f);
 
-	
+	int timer = 0;
+	highscoreFile.WriteData("smlScore", "OHHHHHHHHHHHH_BB");
+
+	std::vector<std::string> smlScore = highscoreFile.ReadData("smlScore");
+	int jam = 0;
 }
 
 Game::~Game()
@@ -263,12 +304,21 @@ Game::~Game()
 	InputLayouts::DestroyAll();
 
 	//Clean up FMOD
-	//result = sound2->release();
-	//ERRCHECK(result);
+	result = sound1->release();
+	ERRCHECK(result);
+
+	result = sound2->release();
+	ERRCHECK(result);
+
+	result = sound3->release();
+	ERRCHECK(result);
+
 	result = music->release();
 	ERRCHECK(result);
+
 	result = system->close();
 	ERRCHECK(result);
+
 	result = system->release();
 	ERRCHECK(result);
 	
@@ -345,8 +395,14 @@ void Game::InitFMOD()
 	}
 	ERRCHECK(result);
 
-	//result = system->createSound("test2.ogg", FMOD_HARDWARE, 0, &sound2);
-	//ERRCHECK(result);
+	result = system->createSound("flag.mp3", FMOD_HARDWARE, 0, &sound1);
+	ERRCHECK(result);
+
+	result = system->createSound("victory.mp3", FMOD_HARDWARE, 0, &sound2);
+	ERRCHECK(result);
+
+	result = system->createSound("boom.mp3", FMOD_HARDWARE, 0, &sound3);
+	ERRCHECK(result);
 
 	result = system->createStream("music.mp3", FMOD_HARDWARE | FMOD_LOOP_NORMAL | FMOD_2D, 0, &music);
 	ERRCHECK(result);
@@ -382,6 +438,19 @@ void Game::InitTextures()
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/soundfxoff.png", 0, 0, &mDiffuseMapSRVMenuButtons[10], 0)); //SOUND
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/musicon.png", 0, 0, &mDiffuseMapSRVMenuButtons[11], 0)); //MUSIC
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/musicoff.png", 0, 0, &mDiffuseMapSRVMenuButtons[12], 0)); //MUSIC
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/highscore.png", 0, 0, &mDiffuseMapSRVMenuButtons[13], 0)); //HIGHSCORE
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#0.png", 0, 0, &mDiffuseMapSRVMenuButtons[14], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#1.png", 0, 0, &mDiffuseMapSRVMenuButtons[15], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#2.png", 0, 0, &mDiffuseMapSRVMenuButtons[16], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#3.png", 0, 0, &mDiffuseMapSRVMenuButtons[17], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#4.png", 0, 0, &mDiffuseMapSRVMenuButtons[18], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#5.png", 0, 0, &mDiffuseMapSRVMenuButtons[19], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#6.png", 0, 0, &mDiffuseMapSRVMenuButtons[20], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#7.png", 0, 0, &mDiffuseMapSRVMenuButtons[21], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#8.png", 0, 0, &mDiffuseMapSRVMenuButtons[22], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#9.png", 0, 0, &mDiffuseMapSRVMenuButtons[23], 0)); //HIGHSCORE DIGIT
+	//HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HSDOT.png", 0, 0, &mDiffuseMapSRVMenuButtons[24], 0)); //HIGHSCORE DIGIT
+
 
 	//Game Textures
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/MetalBox.jpg", 0, 0, &mDiffuseMapSRVBoxTypes[0], 0));
@@ -391,7 +460,7 @@ void Game::InitTextures()
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/three.png", 0, 0, &mDiffuseMapSRVBoxTypes[4], 0));
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/four.png", 0, 0, &mDiffuseMapSRVBoxTypes[5], 0));
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/five.png", 0, 0, &mDiffuseMapSRVBoxTypes[6], 0));
-	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/flag.png", 0, 0, &mDiffuseMapSRVBoxTypes[6], 0));
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/flag.png", 0, 0, &mDiffuseMapSRVBoxTypes[7], 0));
 }
 
 bool Game::Init()
@@ -439,7 +508,7 @@ void Game::OnResize()
 	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
 
-	mCam.SetLens(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+	mCam.SetLens(0.25f*MathHelper::Pi, AspectRatio(), 6.0f, 1000.0f);
 }
 
 void Game::UpdateScene(float dt)
@@ -513,6 +582,14 @@ void Game::UpdateScene(float dt)
 	{
 		PostQuitMessage(0);
 	}
+
+	//game timer
+	if (timerOn)
+	{
+		timer += dt;
+	}
+
+
 }
 
 void Game::DrawScene()
@@ -556,17 +633,6 @@ void Game::DrawScene()
 	activeTexTech->GetDesc( &techDesc );
     for(UINT p = 0; p < techDesc.Passes; ++p)
     {
-		//animate fire
-		timer++;
-		if (timer > 30)
-		{
-			timer = 0;
-			whichIMG++;
-			if (whichIMG > 119)
-			{
-				whichIMG = 0;
-			}
-		}
 		if (GetAsyncKeyState('1') & 0x8000)md3dImmediateContext->RSSetState(RenderStates::WireframeRS);
 
 		md3dImmediateContext->IASetVertexBuffers(0, 1, &mBoxVB, &stride, &offset);
@@ -590,48 +656,56 @@ void Game::DrawScene()
 					Effects::BasicFX->SetMaterial(mBoxMat);
 					//Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV);
 					//Effects::BasicFX->SetDiffuseMap2(mDiffuseMapSRV2);
-					switch (cubes[i]->texture) //show texture of cube
+					if (cubes[i]->flagged == true)
 					{
-					case Cube::GRAY:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[0]); //metel box
-						break;
-					case Cube::MINE:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[1]); //diamond
-						break;
-					case Cube::ONE:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[2]); //one
-						break;
-					case Cube::TWO:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[3]); //two
-						break;
-					case Cube::THREE:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[4]); //three
-						break;
-					case Cube::FOUR:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[5]); //four
-						break;
-					case Cube::FIVE:
-						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[6]); //five
-						break;
-					case Cube::FLAG:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[7]); //flag
-						break;
-						/*case 0:
-							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV); //grass
-							break;
-							case 1:
-							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV2); //stone
-							break;
-							case 2:
-							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV3[whichIMG]); //fire
-							break;
-							case 3:
-							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV4); //diamond
-							break;
-							case 4:
-							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV5); //sand
-							break;*/
 					}
+					else
+					{
+						switch (cubes[i]->texture) //show texture of cube
+						{
+						case Cube::GRAY:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[0]); //metel box
+							break;
+						case Cube::MINE:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[0]); //diamond
+							break;
+						case Cube::ONE:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[2]); //one
+							break;
+						case Cube::TWO:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[3]); //two
+							break;
+						case Cube::THREE:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[4]); //three
+							break;
+						case Cube::FOUR:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[5]); //four
+							break;
+						case Cube::FIVE:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[6]); //five
+							break;
+						case Cube::FLAG:
+							Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[7]); //flag
+							break;
+							/*case 0:
+								Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV); //grass
+								break;
+								case 1:
+								Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV2); //stone
+								break;
+								case 2:
+								Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV3[whichIMG]); //fire
+								break;
+								case 3:
+								Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV4); //diamond
+								break;
+								case 4:
+								Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV5); //sand
+								break;*/
+						}
+					}
+					
 					activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
 					md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
 				
@@ -713,6 +787,42 @@ void Game::DrawScene()
 					case MUSICbOff:
 						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[12]);
 						break;
+					case HIGHSCOREb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[13]);
+						break;
+					case HSDIGITb0:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[14]);
+						break;
+					case HSDIGITb1:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[15]);
+						break;
+					case HSDIGITb2:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[16]);
+						break;
+					case HSDIGITb3:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[17]);
+						break;
+					case HSDIGITb4:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[18]);
+						break;
+					case HSDIGITb5:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[19]);
+						break;
+					case HSDIGITb6:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[20]);
+						break;
+					case HSDIGITb7:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[21]);
+						break;
+					case HSDIGITb8:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[22]);
+						break;
+					case HSDIGITb9:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[23]);
+						break;
+					case HSDOTb:
+						Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[24]);
+						break;
 					}
 					activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
 					md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
@@ -754,8 +864,11 @@ void Game::OnMouseDown(WPARAM btnState, int x, int y)
 	}*/
 	if ((btnState & MK_LBUTTON) != 0)
 	{
-		Pick(x, y);
-		
+		Pick(x, y, MK_LBUTTON);
+	}
+	if ((btnState & MK_RBUTTON) != 0)
+	{
+		Pick(x, y, MK_RBUTTON);
 	}
 
 }
@@ -790,11 +903,11 @@ void Game::OnMouseWheelMove(WPARAM btnState,int fwKeys, int zDelta, int x, int y
 
 		if (zDelta > 1 && length > 5) //mouse wheel up
 		{
-			mCam.Walk(1.0f);
+			mCam.Walk(0.5f);
 		}
 		else if (zDelta < 1 && length < 30) //mouse wheel down
 		{
-			mCam.Walk(-1.0f);
+			mCam.Walk(-0.5f);
 		}
 	}
 }
@@ -940,7 +1053,7 @@ bool Game::AreSameVec(XMVECTOR a, XMVECTOR b)
 		return false;
 }
 
-void Game::Pick(int sx, int sy)
+void Game::Pick(int sx, int sy, int button)
 {
 	XMMATRIX P = mCam.Proj();
 
@@ -1009,15 +1122,15 @@ void Game::Pick(int sx, int sy)
 						switch (diffState)
 						{
 						case EASY:
-							MakeLevel(6, 6, 6);
+							MakeLevel(SML_LVL_SIZE, SML_LVL_SIZE, SML_LVL_SIZE);
 							menu = false;
 							break;
 						case MEDIUM:
-							MakeLevel(8, 8, 8);
+							MakeLevel(MED_LVL_SIZE, MED_LVL_SIZE, MED_LVL_SIZE);
 							menu = false;
 							break;
 						case HARD:
-							MakeLevel(10, 10, 10);
+							MakeLevel(LRG_LVL_SIZE, LRG_LVL_SIZE, LRG_LVL_SIZE);
 							menu = false;
 							break;
 						case NONE:
@@ -1045,7 +1158,11 @@ void Game::Pick(int sx, int sy)
 						PostQuitMessage(0);
 						break;
 					case SOUNDb:
-
+						soundIsPlaying = !soundIsPlaying;
+						channel1->setMute(soundIsPlaying);
+						channel2->setMute(soundIsPlaying);
+						channel3->setMute(soundIsPlaying);
+						channel4->setMute(soundIsPlaying);
 						break;
 					case MUSICb:
 						musicIsPlaying = !musicIsPlaying;
@@ -1063,22 +1180,122 @@ void Game::Pick(int sx, int sy)
 			std::sort(cubesTouched.begin(), cubesTouched.end(), SortByVector);
 			int size = cubes.size();
 			int place = cubesTouched[0]->uniqueID;
-			switch (cubes[place]->texture)
+			//turn in the timer
+			timerOn = true;
+
+			if (button == MK_LBUTTON && !cubes[place]->flagged)
 			{
-			case Cube::GRAY:
-				SetUpLevelData(20);
-				CheckBlockSides(place);
-				//cubesChecked.clear();
-				//delete(cubes[place]);
-				cubes[place] = NULL;
-				//cubes.erase(cubes.begin() + place);
-				break;
-			case Cube::MINE:
-				CleanLevel();
-				MakeLevel(levelWidth,levelHeight,levelLength);
-				break;
+				switch (cubes[place]->texture)
+				{
+				case Cube::GRAY:
+					switch (levelHeight)
+					{
+					case SML_LVL_SIZE:
+						SetUpLevelData(SML_NUM_MINES);
+						break;
+					case MED_LVL_SIZE:
+						SetUpLevelData(MED_NUM_MINES);
+						break;
+					case LRG_LVL_SIZE:
+						SetUpLevelData(LRG_NUM_MINES);
+						break;
+					}
+					CheckBlockSides(place);
+					cubesChecked.clear();
+					//delete(cubes[place]);
+					//cubes[place] = NULL;
+					//cubes.erase(cubes.begin() + place);
+					break;
+				case Cube::MINE:
+					result = system->playSound(FMOD_CHANNEL_FREE, sound3, false, &channel4);
+					ERRCHECK(result);
+					CleanLevel();
+					MakeLevel(levelWidth, levelHeight, levelLength);
+					break;
+				}
+			}
+			else if (button == MK_RBUTTON)//swap is flagged state
+			{
+				cubes[place]->flagged = !cubes[place]->flagged;
+				result = system->playSound(FMOD_CHANNEL_FREE, sound1, false, &channel2);
+				ERRCHECK(result);
 			}
 		}
+		//win check
+		int minesFlagged = 0;
+		int grays = 0;
+		for (int i = 0; i < cubes.size(); i++)
+		{
+			if (cubes[i] != NULL)
+			{
+				if (cubes[i]->texture == Cube::GRAY)
+				{
+					grays++;
+				}
+				if (cubes[i]->flagged == true && cubes[i]->texture == Cube::MINE)
+				{
+
+					minesFlagged++;
+				}
+			}
+		}
+		switch (levelHeight)
+		{
+		case SML_LVL_SIZE:
+			if (minesFlagged == SML_NUM_MINES && grays == 0)
+			{
+				result = system->playSound(FMOD_CHANNEL_FREE, sound2, false, &channel3);
+				ERRCHECK(result);
+				std::wstringstream out;
+				out << L"You Win in ";
+				out << timer;
+				out << "! The game will no reset.";
+				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
+				
+				CleanLevel();
+				timer = 0;
+				timerOn = false;
+				MakeLevel(levelWidth, levelHeight, levelLength);
+				
+			}
+			break;
+		case MED_LVL_SIZE:
+			if (minesFlagged == MED_NUM_MINES && grays == 0)
+			{
+				result = system->playSound(FMOD_CHANNEL_FREE, sound2, false, &channel3);
+				ERRCHECK(result);
+				std::wstringstream out;
+				out << L"You Win in ";
+				out << timer;
+				out << "! The game will no reset.";
+				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
+				
+				CleanLevel();
+				timer = 0;
+				timerOn = false;
+				MakeLevel(levelWidth, levelHeight, levelLength);
+
+			}
+			break;
+		case LRG_LVL_SIZE:
+			if (minesFlagged == LRG_NUM_MINES && grays == 0)
+			{
+				result = system->playSound(FMOD_CHANNEL_FREE, sound2, false, &channel3);
+				ERRCHECK(result);
+				std::wstringstream out;
+				out << L"You Win in ";
+				out << timer;
+				out << "! The game will no reset.";
+				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
+				
+				CleanLevel();
+				timer = 0;
+				timerOn = false;
+				MakeLevel(levelWidth, levelHeight, levelLength);
+			}
+			break;
+		}
+
 	}
 }
 
@@ -1099,8 +1316,8 @@ void Game::CreateMenu()
 
 	//PLAY BUTTON
 	Cube * playButton = new Cube;
-	playButton->pos = XMVectorSet(0, -1, 5, 1);
-	playButton->originPos = XMVectorSet(0, -1, 5, 1);
+	playButton->pos = XMVectorSet(0, -6, 5, 1);
+	playButton->originPos = XMVectorSet(0, -6, 5, 1);
 	playButton->scale = XMVectorSet(10.0f, 2.0f, 1.0f, 1.0f);
 	XMStoreFloat4x4(&playButton->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(playButton->scale), XMMatrixTranslationFromVector(playButton->pos)));
 	XMStoreFloat3(&playButton->mMeshBox.Center, playButton->pos);
@@ -1110,6 +1327,85 @@ void Game::CreateMenu()
 	playButton->isMenu = true;
 	Game::cubes.push_back(playButton); 
 
+	//highScore
+	Cube * highScore = new Cube;
+	highScore->pos = XMVectorSet(0, 2, 5, 1);
+	highScore->originPos = XMVectorSet(0, 2, 5, 1);
+	highScore->scale = XMVectorSet(10.0f, 0.5f, 1.0f, 1.0f);
+	XMStoreFloat4x4(&highScore->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(highScore->scale), XMMatrixTranslationFromVector(highScore->pos)));
+	XMStoreFloat3(&highScore->mMeshBox.Center, highScore->pos);
+	XMVECTOR HShalfSize = XMVectorSet(5.0f, 0.25f, 0.5f, 1.0f);
+	XMStoreFloat3(&highScore->mMeshBox.Extents, HShalfSize);
+	highScore->menuTexture = HIGHSCOREb;
+	highScore->isMenu = true;
+	Game::cubes.push_back(highScore);
+
+	//SINGLE DIGIT SCORE BOX
+	for (int i = 0; i < 5; i++)
+	{
+		std::stringstream toDraw;
+		toDraw << smlHScore;
+		int numToDraw = toDraw.str()[i] + 14 - 48;
+		//if (toDraw.str()[i] == 46)
+			//numToDraw = HSDOTb;
+
+		Cube * scoreDigit = new Cube;
+		scoreDigit->pos = XMVectorSet(-10+i*1.1, -1, 5, 1);
+		scoreDigit->originPos = XMVectorSet(0, -1, 5, 1);
+		scoreDigit->scale = XMVectorSet(1.0f, 1.2f, 1.0f, 1.0f);
+		XMStoreFloat4x4(&scoreDigit->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(scoreDigit->scale), XMMatrixTranslationFromVector(scoreDigit->pos)));
+		XMStoreFloat3(&scoreDigit->mMeshBox.Center, scoreDigit->pos);
+		XMVECTOR SDhalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f);
+		XMStoreFloat3(&scoreDigit->mMeshBox.Extents, SDhalfSize);
+		scoreDigit->menuTexture = numToDraw;
+		scoreDigit->isMenu = true;
+		Game::cubes.push_back(scoreDigit);
+	}
+
+	//SINGLE DIGIT SCORE BOX
+	for (int i = 0; i < 5; i++)
+	{
+		std::stringstream toDraw;
+		toDraw << midHScore;//change this to the float you want to draw
+		int numToDraw = toDraw.str()[i] + 14 - 48;
+		//if (toDraw.str()[i] == 46)
+		//numToDraw = HSDOTb;
+
+		Cube * scoreDigit = new Cube;
+		scoreDigit->pos = XMVectorSet(-2 + i*1.1, -1, 5, 1);
+		scoreDigit->originPos = XMVectorSet(0, -1, 5, 1);
+		scoreDigit->scale = XMVectorSet(1.0f, 1.2f, 1.0f, 1.0f);
+		XMStoreFloat4x4(&scoreDigit->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(scoreDigit->scale), XMMatrixTranslationFromVector(scoreDigit->pos)));
+		XMStoreFloat3(&scoreDigit->mMeshBox.Center, scoreDigit->pos);
+		XMVECTOR SDhalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f);
+		XMStoreFloat3(&scoreDigit->mMeshBox.Extents, SDhalfSize);
+		scoreDigit->menuTexture = numToDraw;
+		scoreDigit->isMenu = true;
+		Game::cubes.push_back(scoreDigit);
+	}
+
+	//SINGLE DIGIT SCORE BOX
+	for (int i = 0; i < 5; i++)
+	{
+		std::stringstream toDraw;
+		toDraw << lrgHScore;//change this to the float you want to draw
+		int numToDraw = toDraw.str()[i] + 14 - 48;
+		//if (toDraw.str()[i] == 46)
+		//numToDraw = HSDOTb;
+
+		Cube * scoreDigit = new Cube;
+		scoreDigit->pos = XMVectorSet(5 + i*1.1, -1, 5, 1);
+		scoreDigit->originPos = XMVectorSet(0, -1, 5, 1);
+		scoreDigit->scale = XMVectorSet(1.0f, 1.2f, 1.0f, 1.0f);
+		XMStoreFloat4x4(&scoreDigit->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(scoreDigit->scale), XMMatrixTranslationFromVector(scoreDigit->pos)));
+		XMStoreFloat3(&scoreDigit->mMeshBox.Center, scoreDigit->pos);
+		XMVECTOR SDhalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f);
+		XMStoreFloat3(&scoreDigit->mMeshBox.Extents, SDhalfSize);
+		scoreDigit->menuTexture = numToDraw;
+		scoreDigit->isMenu = true;
+		Game::cubes.push_back(scoreDigit);
+	}
+	
 	// EASY BUTTON
 	Cube * easyButton = new Cube;
 	easyButton->pos = XMVectorSet(-7, 3, 5, 1);
@@ -1191,6 +1487,7 @@ void Game::CreateMenu()
 
 void Game::CleanLevel()
 {
+
 	cubes.clear();
 	isLevelSet = false;
 }
@@ -1273,10 +1570,24 @@ void Game::SetUpLevelData(int mines)
 
 int Game::CheckBlockSides(int placeInArray)
 {
-	if (cubes[placeInArray] == NULL)
+	/* draw thingy
+	while (funcTimer > 0)
+	{
+		DrawScene();
+		funcTimer -= FUNC_TIME_LENGTH;
+	}
+	funcTimer = 10;
+	*/
+
+
+
+	//check if the block is not really a block
+	if ( placeInArray < cubes.size() && cubes[placeInArray] == NULL || cubes[placeInArray]->texture == Cube::MINE)
 	{
 		return 0;
 	}
+
+	//check if it has beed checked before
 	for (int i = 0; i < cubesChecked.size(); i++)
 	{
 		if (cubesChecked[i] == placeInArray)
@@ -1284,6 +1595,7 @@ int Game::CheckBlockSides(int placeInArray)
 			return 0;
 		}
 	}
+
 	cubesChecked.push_back(cubes[placeInArray]->uniqueID);
 	int numOfMinesTouching = 0;
 	
@@ -1294,14 +1606,48 @@ int Game::CheckBlockSides(int placeInArray)
 
 
 	//make counter for number of mines
-	//int q = (36 / 35) + 1; 
+	//int q = (36 / 35) + 1;
 	int layerArea = levelWidth * levelLength;
 	int cubeVolume = levelWidth * levelLength * levelHeight;
-	int layer;
+	int layerCurr = (placeInArray / layerArea) + 1;
+	int layerOther;
 	int temp;
-	
-	//check left
+
+	//set up some vars for runnnig the function again
+	bool runLeft = false;
+	bool runRight = false;
+	bool runAbove = false;
+	bool runBelow = false;
+	bool runForward = false;
+	bool runBack = false;
+
+	//get the different blocks places 
 	int left = placeInArray - 1;
+	int right = placeInArray + 1;
+	int forward = placeInArray + levelWidth;
+	int back = placeInArray - levelWidth;
+	int above = placeInArray + layerArea;
+	int below = placeInArray - layerArea;
+
+	//lambda to check stuff for removel
+	auto checkRemoveBlock = [&](int blockPlace) 
+	{
+
+		//check if the block is not really a block
+		if (cubes.size() > blockPlace && !cubes[blockPlace] == NULL)
+		{
+			//check if it has beed checked before
+			for (int i = 0; i < cubesChecked.size(); i++)
+			{
+				if (!cubesChecked[i] == blockPlace)
+				{
+					cubesChecked.push_back(cubes[blockPlace]->uniqueID);
+				}
+			}
+		}		
+	};
+
+	//check left
 	if (left >= 0 &&
 		placeInArray % levelWidth != 0 &&
 		cubes[left] != NULL)
@@ -1309,16 +1655,21 @@ int Game::CheckBlockSides(int placeInArray)
 		if (cubes[left]->texture == Cube::MINE)
 		{
 			numOfMinesTouching++;
-			//return 0;
+			//make all the blocks aroiund the block we are checking marked as checked(this should mostly work
+			//checkRemoveBlock(right);
+			//checkRemoveBlock(forward);
+			//checkRemoveBlock(back);
+			//checkRemoveBlock(above);
+			//checkRemoveBlock(below);
+
 		}
-		else
+		else if(cubes[left]->texture == Cube::GRAY)
 		{
-			CheckBlockSides(left);
+			runLeft = true;
 		}
 	}
 
 	//check right
-	int right = placeInArray + 1;
 	if (right < cubeVolume &&
 		placeInArray % levelWidth != levelWidth - 1 &&
 		cubes[right] != NULL)
@@ -1327,82 +1678,107 @@ int Game::CheckBlockSides(int placeInArray)
 		{
 			numOfMinesTouching++;
 			//return 0;
+			//checkRemoveBlock(left);
+			//checkRemoveBlock(forward);
+			//checkRemoveBlock(back);
+			//checkRemoveBlock(above);
+			//checkRemoveBlock(below);
 		}
-		else
+		else if (cubes[right]->texture == Cube::GRAY)
 		{
-			CheckBlockSides(right);
+			runRight = true;
 		}
 	}
 
 	//check forward
-	int forward = placeInArray + levelWidth;
-	layer = (forward / layerArea) + 1;
-	temp = (forward - ((layerArea * layer) - 1)); //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
+	layerOther = (forward / layerArea) + 1;
+	//temp = placeInArray - (layerArea * layer);
 	if (forward < cubeVolume - levelWidth &&
-	//temp <= -((layerArea / levelWidth)) + 1 &&
+		layerCurr == layerOther &&
+		//temp <= -((layerArea / levelWidth)) + 1 && //old andrew stuff
 		cubes[forward] != NULL) //is not in top row)
 	{
 		if (cubes[forward]->texture == Cube::MINE)
 		{
 			numOfMinesTouching++;
 			//return 0;
+			//checkRemoveBlock(right);
+			//checkRemoveBlock(left);
+			//checkRemoveBlock(back);
+			//checkRemoveBlock(above);
+			//checkRemoveBlock(below);
 		}
-		else
+		else if (cubes[forward]->texture == Cube::GRAY)
 		{
-			CheckBlockSides(forward);
+			runForward = true;
 		}
 	}
 
 	//check backward
-	int back = placeInArray - levelWidth;
-	layer = (back / layerArea) + 1;
-	temp = placeInArray - (layerArea * layer);//(placeInArray - (layerArea * layer - 1)) - layerArea; //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
+	layerOther = (back / layerArea) + 1; //Horizontal layer (xz Plane)
+	temp = placeInArray - (layerArea * layerOther);//(placeInArray - (layerArea * layer - 1)) - layerArea; //gets a number from -(levelWidth*levelHeight) to 0 which represents which spot in the layer the block is in
 	if (back >= 0 &&
-		temp >= levelWidth && //temp >= -(layerArea)+levelWidth &&
+		layerCurr == layerOther &&
+		temp >= levelWidth && //temp >= -(layerArea)+levelWidth && //Old andrew stuff
 		cubes[back] != NULL) //this if is never true
 	{
 		if (cubes[back]->texture == Cube::MINE)
 		{
+			
 			numOfMinesTouching++;
 			//return 0; 
+			//checkRemoveBlock(right);
+			//checkRemoveBlock(forward);
+			//checkRemoveBlock(left);
+			//checkRemoveBlock(above);
+			//checkRemoveBlock(below);
 		}
-		else
+		else if (cubes[back]->texture == Cube::GRAY)
 		{
-			CheckBlockSides(back);
+			runBack = true;
 		}
 	}
 
 	//check above
-	int above = placeInArray + layerArea;
 	//layer = (above / layerArea) + 1;
-	if (above < cubeVolume &&
+	if (above < cubeVolume && above > layerArea - 2 && // -2 or just -1 ?
 		cubes[above] != NULL)
 	{
 		if (cubes[above]->texture == Cube::MINE)
 		{
 			numOfMinesTouching++;
 			//return 0;
+			//checkRemoveBlock(right);
+			//checkRemoveBlock(forward);
+			//checkRemoveBlock(back);
+			//checkRemoveBlock(left);
+			//checkRemoveBlock(below);
 		}
-		else
+		else if (cubes[above]->texture == Cube::GRAY)
 		{
-			CheckBlockSides(above);
+			runAbove = true;
 		}
 	}
 
 	//check below
-	int below = placeInArray - layerArea;
 	//layer = (above / layerArea) + 1;
-	if (below >= 0 &&
+	if (below >= 0 && below < (cubeVolume - layerArea) &&
 		cubes[below] != NULL)
 	{
 		if (cubes[below]->texture == Cube::MINE)
 		{
 			numOfMinesTouching++;
 			//return 0;
+			//checkRemoveBlock(right);
+			//checkRemoveBlock(forward);
+			//checkRemoveBlock(back);
+			//checkRemoveBlock(above);
+			//checkRemoveBlock(left);
 		}
-		else
+		else if (cubes[below]->texture == Cube::GRAY)
 		{
-			CheckBlockSides(below);
+
+			runBelow = true;
 		}
 	}
 
@@ -1435,5 +1811,38 @@ int Game::CheckBlockSides(int placeInArray)
 		break;
 
 	}
+
+	if (numOfMinesTouching == 0)
+	{
+		if (runRight)
+		{
+			CheckBlockSides(right);
+		}
+		if (runLeft)
+		{
+			CheckBlockSides(left);
+		}
+		if (runForward)
+		{
+			CheckBlockSides(forward);
+		}
+		if (runBack)
+		{
+			CheckBlockSides(back);
+		}
+		if (runAbove)
+		{
+			CheckBlockSides(above);
+		}
+		if (runBelow)
+		{
+			CheckBlockSides(below);
+		}
+	}
+	else
+	{
+		DrawScene();
+	}
+
 	return 0;
 }

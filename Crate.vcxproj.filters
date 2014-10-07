@@ -63,6 +63,9 @@
     <ClCompile Include="Sky.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FileWriter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vertex.h">
@@ -111,6 +114,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Sky.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileWriter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
