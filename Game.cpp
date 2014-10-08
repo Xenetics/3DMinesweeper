@@ -106,7 +106,7 @@ private:
 	FileWriter highscoreFile;
 
 	float smlHScore = 155.56467;
-	float midHScore = 152.67979;
+	float medHScore = 152.67979;
 	float lrgHScore = 157.78789;
 
 private:
@@ -447,7 +447,7 @@ void Game::InitTextures()
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#7.png", 0, 0, &mDiffuseMapSRVMenuButtons[21], 0)); //HIGHSCORE DIGIT
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#8.png", 0, 0, &mDiffuseMapSRVMenuButtons[22], 0)); //HIGHSCORE DIGIT
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#9.png", 0, 0, &mDiffuseMapSRVMenuButtons[23], 0)); //HIGHSCORE DIGIT
-	//HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HSDOT.png", 0, 0, &mDiffuseMapSRVMenuButtons[24], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HSDOT.png", 0, 0, &mDiffuseMapSRVMenuButtons[24], 0)); //HIGHSCORE DIGIT
 
 
 	//Game Textures
@@ -474,7 +474,7 @@ bool Game::Init()
 	std::string fileOut = highscoreFile.ReadData("smlScore")[0];
 	smlHScore = atof(fileOut.c_str());
 	fileOut = highscoreFile.ReadData("medScore")[0];
-	midHScore = atof(fileOut.c_str());
+	medHScore = atof(fileOut.c_str());
 	fileOut = highscoreFile.ReadData("lrgScore")[0];
 	lrgHScore = atof(fileOut.c_str());
 
@@ -728,8 +728,8 @@ void Game::DrawScene()
 					toDraw << (timer + 0.0001);
 					int numToDraw = toDraw.str()[i] + 14 - 48;
 					//COMMENT OUT WHEN '.' TEXTURE IN
-					//if (toDraw.str()[i] == 46)
-						//numToDraw = HSDOTb;
+					if (toDraw.str()[i] == 46)
+						numToDraw = HSDOTb;
 					HudCubes[i]->menuTexture = numToDraw;
 				}
 				else
@@ -741,7 +741,7 @@ void Game::DrawScene()
 						toDraw << (smlHScore);
 						break;
 					case MED_LVL_SIZE:
-						toDraw << (midHScore);
+						toDraw << (medHScore);
 						break;
 					case LRG_LVL_SIZE:
 						toDraw << (lrgHScore);
@@ -751,8 +751,8 @@ void Game::DrawScene()
 
 					int numToDraw = toDraw.str()[i-5] + 14 - 48;
 					//COMMENT OUT WHEN '.' TEXTURE IN
-					//if (toDraw.str()[i] == 46)
-						//numToDraw = HSDOTb;
+					if (toDraw.str()[i-5] == 46)
+						numToDraw = HSDOTb;
 					HudCubes[i]->menuTexture = numToDraw;
 
 				}
@@ -1472,6 +1472,18 @@ void Game::Pick(int sx, int sy, int button)
 				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
 				
 				CleanLevel();
+
+				//record high score
+				std::string fileOut = highscoreFile.ReadData("medScore")[0];
+				float highScore = atof(fileOut.c_str());
+				if (timer < highScore)
+				{
+					medHScore = timer;
+					std::stringstream temp;
+					temp << timer;
+					highscoreFile.WriteData("medScore", temp.str());
+				}
+
 				timer = 0;
 				timerOn = false;
 				MakeLevel(levelWidth, levelHeight, levelLength);
@@ -1490,6 +1502,18 @@ void Game::Pick(int sx, int sy, int button)
 				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
 				
 				CleanLevel();
+
+				//record high score
+				std::string fileOut = highscoreFile.ReadData("lrgScore")[0];
+				float highScore = atof(fileOut.c_str());
+				if (timer < highScore)
+				{
+					lrgHScore = timer;
+					std::stringstream temp;
+					temp << timer;
+					highscoreFile.WriteData("lrgScore", temp.str());
+				}
+
 				timer = 0;
 				timerOn = false;
 				MakeLevel(levelWidth, levelHeight, levelLength);
@@ -1547,8 +1571,8 @@ void Game::CreateMenu()
 		std::stringstream toDraw;
 		toDraw << smlHScore;
 		int numToDraw = toDraw.str()[i] + 14 - 48;
-		//if (toDraw.str()[i] == 46)
-			//numToDraw = HSDOTb;
+		if (toDraw.str()[i] == 46)
+			numToDraw = HSDOTb;
 
 		Cube * scoreDigit = new Cube;
 		scoreDigit->pos = XMVectorSet(-10+i*1.1, -1, 5, 1);
@@ -1567,10 +1591,10 @@ void Game::CreateMenu()
 	for (int i = 0; i < 5; i++)
 	{
 		std::stringstream toDraw;
-		toDraw << midHScore;//change this to the float you want to draw
+		toDraw << medHScore;//change this to the float you want to draw
 		int numToDraw = toDraw.str()[i] + 14 - 48;
-		//if (toDraw.str()[i] == 46)
-		//numToDraw = HSDOTb;
+		if (toDraw.str()[i] == 46)
+			numToDraw = HSDOTb;
 
 		Cube * scoreDigit = new Cube;
 		scoreDigit->pos = XMVectorSet(-2 + i*1.1, -1, 5, 1);
@@ -1591,8 +1615,8 @@ void Game::CreateMenu()
 		std::stringstream toDraw;
 		toDraw << lrgHScore;//change this to the float you want to draw
 		int numToDraw = toDraw.str()[i] + 14 - 48;
-		//if (toDraw.str()[i] == 46)
-		//numToDraw = HSDOTb;
+		if (toDraw.str()[i] == 46) 
+			numToDraw = HSDOTb;
 
 		Cube * scoreDigit = new Cube;
 		scoreDigit->pos = XMVectorSet(5 + i*1.1, -1, 5, 1);
@@ -1694,8 +1718,8 @@ void Game::CreateHud()
 		std::stringstream toDraw;
 		toDraw << smlHScore;
 		int numToDraw = toDraw.str()[i] + 14 - 48;
-		//if (toDraw.str()[i] == 46)
-		//numToDraw = HSDOTb;
+		if (toDraw.str()[i] == 46)
+			numToDraw = HSDOTb;
 
 		Cube * scoreDigit = new Cube;
 		scoreDigit->pos = XMVectorSet(-10 + i*1.1, -1, 5, 1);
@@ -1713,8 +1737,8 @@ void Game::CreateHud()
 		std::stringstream toDraw;
 		toDraw << lrgHScore;//change this to the float you want to draw
 		int numToDraw = toDraw.str()[i] + 14 - 48;
-		//if (toDraw.str()[i] == 46)
-		//numToDraw = HSDOTb;
+		if (toDraw.str()[i] == 46)
+			numToDraw = HSDOTb;
 
 		Cube * scoreDigit = new Cube;
 		scoreDigit->pos = XMVectorSet(5 + i*1.1, -1, 5, 1);
