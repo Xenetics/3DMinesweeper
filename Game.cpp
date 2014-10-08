@@ -448,7 +448,7 @@ void Game::InitTextures()
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#7.png", 0, 0, &mDiffuseMapSRVMenuButtons[21], 0)); //HIGHSCORE DIGIT
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#8.png", 0, 0, &mDiffuseMapSRVMenuButtons[22], 0)); //HIGHSCORE DIGIT
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HS#9.png", 0, 0, &mDiffuseMapSRVMenuButtons[23], 0)); //HIGHSCORE DIGIT
-	//HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HSDOT.png", 0, 0, &mDiffuseMapSRVMenuButtons[24], 0)); //HIGHSCORE DIGIT
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/game pics/HSDOT.png", 0, 0, &mDiffuseMapSRVMenuButtons[24], 0)); //HIGHSCORE DIGIT
 
 
 	//Game Textures
@@ -1345,8 +1345,8 @@ void Game::CreateMenu()
 		std::stringstream toDraw;
 		toDraw << smlHScore;
 		int numToDraw = toDraw.str()[i] + 14 - 48;
-		//if (toDraw.str()[i] == 46)
-			//numToDraw = HSDOTb;
+		if (toDraw.str()[i] == 46)
+			numToDraw = HSDOTb;
 
 		Cube * scoreDigit = new Cube;
 		scoreDigit->pos = XMVectorSet(-10+i*1.1, -1, 5, 1);
@@ -1367,8 +1367,8 @@ void Game::CreateMenu()
 		std::stringstream toDraw;
 		toDraw << midHScore;//change this to the float you want to draw
 		int numToDraw = toDraw.str()[i] + 14 - 48;
-		//if (toDraw.str()[i] == 46)
-		//numToDraw = HSDOTb;
+		if (toDraw.str()[i] == 46)
+		numToDraw = HSDOTb;
 
 		Cube * scoreDigit = new Cube;
 		scoreDigit->pos = XMVectorSet(-2 + i*1.1, -1, 5, 1);
@@ -1389,8 +1389,8 @@ void Game::CreateMenu()
 		std::stringstream toDraw;
 		toDraw << lrgHScore;//change this to the float you want to draw
 		int numToDraw = toDraw.str()[i] + 14 - 48;
-		//if (toDraw.str()[i] == 46)
-		//numToDraw = HSDOTb;
+		if (toDraw.str()[i] == 46)
+		numToDraw = HSDOTb;
 
 		Cube * scoreDigit = new Cube;
 		scoreDigit->pos = XMVectorSet(5 + i*1.1, -1, 5, 1);
