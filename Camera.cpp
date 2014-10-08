@@ -256,6 +256,7 @@ void Camera::OrbitVertical(float angle)
 		((mPosition.y < 0 && angle > 0)))
 		)
 	{
+		pitch += angle;
 		//pitch the camaera by that angle
 		XMVECTOR offsetAngle = XMVector3AngleBetweenVectors(XMLoadFloat3(&XMFLOAT3(1.0, 0.0, 0.0)), XMLoadFloat3(&mRight));
 		RotateY(XMVectorGetX(offsetAngle) + 0.001f);

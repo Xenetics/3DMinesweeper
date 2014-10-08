@@ -137,6 +137,8 @@ private:
 
 	XMFLOAT4X4 mView;
 	XMFLOAT4X4 mProj;
+	XMFLOAT4X4 mDefaultView;
+	XMFLOAT4X4 mDefaultProj;
 
 	int mBoxVertexOffset;
 	UINT mBoxIndexOffset;
@@ -175,6 +177,7 @@ public:
 	// Define transformations from local spaces to world space.
 	XMFLOAT4X4 mMeshWorld;
 	Camera mCam;
+	Camera hudCam;
 	UINT mPickedTriangle;
 
 	// Keep system memory copies of the Mesh geometry for picking.
@@ -242,7 +245,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
  
 
 Game::Game(HINSTANCE hInstance)
-: D3DApp(hInstance), mSky(0), mBoxVB(0), mBoxIB(0), mEyePosW(0.0f, 0.0f, 0.0f), mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), mMeshIndexCount(0), mPickedTriangle(-1),
+: D3DApp(hInstance), mSky(0), mBoxVB(0), mBoxIB(0), mEyePosW(0.0f, 0.0f, 0.0f), mTheta(1.3f*MathHelper::Pi), mPhi(0.4f*MathHelper::Pi), mRadius(2.5f), mCam(), hudCam(), mMeshIndexCount(0), mPickedTriangle(-1),
 highscoreFile("Highscores.hst")
 {
 	//mDiffuseMapSRV3[0] = 0;
@@ -280,6 +283,7 @@ highscoreFile("Highscores.hst")
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixMultiply(MeshScale, MeshOffset));
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixTranslation(levelWidth*0.5f, levelLength * 0.5f, levelHeight * 0.5f));
 	mCam.SetPosition(0.0f, 0.0f, -15.0f);
+	hudCam.SetPosition(0.0f, 0.0f, -15.0f);
 }
 
 Game::~Game()
@@ -516,6 +520,8 @@ void Game::OnResize()
 	XMStoreFloat4x4(&mProj, P);
 
 	mCam.SetLens(0.25f*MathHelper::Pi, AspectRatio(), 6.0f, 1000.0f);
+	hudCam.SetLens(0.25f*MathHelper::Pi, AspectRatio(), 0.1f, 1000.0f);
+
 }
 
 void Game::UpdateScene(float dt)
@@ -615,6 +621,7 @@ void Game::DrawScene()
 	//XMMATRIX viewProj = view*proj;
 
 	mCam.UpdateViewMatrix();
+	hudCam.UpdateViewMatrix();
 
 	XMMATRIX view = mCam.View();
 	XMMATRIX proj = mCam.Proj();
@@ -642,6 +649,7 @@ void Game::DrawScene()
     {
 		md3dImmediateContext->IASetVertexBuffers(0, 1, &mBoxVB, &stride, &offset);
 		md3dImmediateContext->IASetIndexBuffer(mBoxIB, DXGI_FORMAT_R32_UINT, 0);
+		
 
 		// Draw the box.
 		if (!menu)
@@ -715,7 +723,7 @@ void Game::DrawScene()
 					md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
 
 					// Restore default
-					md3dImmediateContext->RSSetState(0);
+					//md3dImmediateContext->RSSetState(0);
 				}
 			}
 
@@ -726,7 +734,8 @@ void Game::DrawScene()
 				{
 					std::stringstream toDraw;
 					toDraw << (timer + 0.0001);
-					int numToDraw = toDraw.str()[i] + 14 - 48;
+					std::string temp = toDraw.str();
+					int numToDraw = temp[i] + 14 - 48;
 					//COMMENT OUT WHEN '.' TEXTURE IN
 					if (toDraw.str()[i] == 46)
 						numToDraw = HSDOTb;
@@ -747,9 +756,9 @@ void Game::DrawScene()
 						toDraw << (lrgHScore);
 						break;
 					}
-					
 
-					int numToDraw = toDraw.str()[i-5] + 14 - 48;
+					std::string temp = toDraw.str();
+					int numToDraw = temp[i-5] + 14 - 48;
 					//COMMENT OUT WHEN '.' TEXTURE IN
 					if (toDraw.str()[i-5] == 46)
 						numToDraw = HSDOTb;
@@ -757,25 +766,38 @@ void Game::DrawScene()
 
 				}
 			}
-
+			/*
+			//ignore depth buffer
+			ID3D11RasterizerState* ignoreDepth;
+			D3D11_RASTERIZER_DESC jimJam;
+			ZeroMemory(&jimJam, sizeof(D3D11_RASTERIZER_DESC));
+			jimJam.FillMode = D3D11_FILL_SOLID;
+			jimJam.CullMode = D3D11_CULL_BACK;
+			jimJam.AntialiasedLineEnable = true;
+			jimJam.FrontCounterClockwise = false;
+			jimJam.DepthClipEnable = false;
+			HR(md3dDevice->CreateRasterizerState(&jimJam, &ignoreDepth));
+			md3dImmediateContext->RSSetState(ignoreDepth);
+			*/
+			md3dImmediateContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.99f, 0);
 			//draw hud
 			for (int i = 0; i < HudCubes.size(); i++)
 			{
-
+				//md3dImmediateContext->RSSetState(ignoreDepth);
 				//lock the position to the camera
 				//move it to camera transform along mLook vector
-				XMFLOAT3 newPos = mCam.GetPosition();
+				XMFLOAT3 newPos = hudCam.GetPosition();
 				XMFLOAT3 newRot;
 				XMVECTOR newScale = XMVectorSet(0.25, 0.3, 0.25, 1.0);
 				//move along mLook
 				XMVECTOR s = XMVectorReplicate(7);//amount 
-				XMVECTOR l = XMLoadFloat3(&mCam.GetLook()); //direction
+				XMVECTOR l = XMLoadFloat3(&hudCam.GetLook()); //direction
 				XMVECTOR h = XMLoadFloat3(&newPos); // current pos
 				XMStoreFloat3(&newPos, XMVectorMultiplyAdd(s, l, h));
 
 				//move along Up
 				s = XMVectorReplicate(2.5);//amount 
-				l = XMLoadFloat3(&mCam.GetUp()); //direction
+				l = XMLoadFloat3(&hudCam.GetUp()); //direction
 				h = XMLoadFloat3(&newPos); // current pos
 				XMStoreFloat3(&newPos, XMVectorMultiplyAdd(s, l, h));
 
@@ -783,7 +805,7 @@ void Game::DrawScene()
 				if (i < HudCubes.size()*0.5)
 				{
 					s = XMVectorReplicate(-3.5 + i * 0.4);//amount 
-					l = XMLoadFloat3(&mCam.GetRight()); //direction
+					l = XMLoadFloat3(&hudCam.GetRight()); //direction
 					h = XMLoadFloat3(&newPos); // current pos
 					XMStoreFloat3(&newPos, XMVectorMultiplyAdd(s, l, h));
 					//update the timer to correct numbers				
@@ -791,33 +813,23 @@ void Game::DrawScene()
 				else
 				{
 					s = XMVectorReplicate(i * 0.4);//amount 
-					l = XMLoadFloat3(&mCam.GetRight()); //direction
+					l = XMLoadFloat3(&hudCam.GetRight()); //direction
 					h = XMLoadFloat3(&newPos); // current pos
 					XMStoreFloat3(&newPos, XMVectorMultiplyAdd(s, l, h));
-				}
+				}			
 
-				// O is your object's position
-				// P is the position of the object to face
-				// U is the nominal "up" vector (typically Vector3.Y)
-				//This only works for rotation around Y (better then nothing for right now)
-				//ask Bryan about this. For turning on another axis.
-				XMVECTOR D = (XMLoadFloat3(&newPos) - mCam.GetPositionXM());
-				XMVECTOR Right = XMVector3Normalize(XMVector3Cross(XMVectorSet(0.0, 1.0, 0.0, 1.0), D));
-				XMVECTOR Backwards = XMVector3Normalize(XMVector3Cross(Right, XMVectorSet(0.0, 1.0, 0.0, 1.0)));
-				XMVECTOR Up = XMVector3Cross(Backwards, Right);
-				XMMATRIX rot(Right, Up, Backwards, XMVectorSet(0, 0, 0, 1)); 
+				
 
-				//this does not work as intended
-				XMMATRIX otherRot = XMMatrixLookAtLH(mCam.GetPositionXM(), XMLoadFloat3(&newPos), XMVectorSet(0.0, 1.0, 0.0, 1.0));
-				otherRot._41 = 0.0f;
-				otherRot._42 = 0.0f;
-				otherRot._43 = 0.0f;
+				XMMATRIX hudView = hudCam.View();
+				XMMATRIX hudProj = hudCam.Proj();
+				XMMATRIX hudViewProj = hudCam.ViewProj();
 
 				//draw bb
-				XMMATRIX world = XMMatrixMultiply(rot, XMMatrixMultiply(XMMatrixScalingFromVector(newScale), XMMatrixTranslationFromVector(XMLoadFloat3(&newPos))));
+				XMMATRIX world = XMMatrixMultiply(XMMatrixScalingFromVector(newScale), XMMatrixTranslationFromVector(XMLoadFloat3(&newPos)));
 				XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
-				XMMATRIX worldViewProj = world*view*proj;
+				XMMATRIX worldViewProj = world*hudView*hudProj; //XMLoadFloat4x4(&mDefaultView)*XMLoadFloat4x4(&mDefaultProj);
 
+				Effects::BasicFX->SetEyePosW(hudCam.GetPosition());
 				Effects::BasicFX->SetWorld(world);
 				Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
 				Effects::BasicFX->SetWorldViewProj(worldViewProj);
@@ -903,8 +915,9 @@ void Game::DrawScene()
 					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[24]);
 					break;
 				}
+				
 				activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
-				md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
+				md3dImmediateContext->DrawIndexed(mBoxIndexCount - 30, mBoxIndexOffset, mBoxVertexOffset);
 
 				// Restore default
 				md3dImmediateContext->RSSetState(0);
@@ -1028,6 +1041,7 @@ void Game::DrawScene()
 			}
 		}
 		//Draw Cubemap
+		Effects::BasicFX->SetEyePosW(mCam.GetPosition());
 		mSky->Draw(md3dImmediateContext, mCam);
     }
 
