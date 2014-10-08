@@ -1325,18 +1325,18 @@ void Game::Pick(int sx, int sy, int button)
 						break;
 					case EASYb:
 						diffState = EASY;
-						IndentDiff(2);
-						cubes[2]->menuTexture = EASYbOn;
+						IndentDiff(3);
+						cubes[3]->menuTexture = EASYbOn;
 						break;
 					case MEDIUMb:
 						diffState = MEDIUM;
-						IndentDiff(3);
-						cubes[3]->menuTexture = MEDIUMbOn;
+						IndentDiff(4);
+						cubes[4]->menuTexture = MEDIUMbOn;
 						break;
 					case HARDb:
 						diffState = HARD;
-						IndentDiff(4);
-						cubes[4]->menuTexture = HARDbOn;
+						IndentDiff(5);
+						cubes[5]->menuTexture = HARDbOn;
 						break;
 					case EXITb:
 						PostQuitMessage(0);
@@ -1567,73 +1567,6 @@ void Game::CreateMenu()
 	highScore->isMenu = true;
 	Game::cubes.push_back(highScore);
 
-	//SINGLE DIGIT SCORE BOX
-	for (int i = 0; i < 5; i++)
-	{
-		std::stringstream toDraw;
-		toDraw << smlHScore;
-		int numToDraw = toDraw.str()[i] + 14 - 48;
-		if (toDraw.str()[i] == 46)
-			numToDraw = HSDOTb;
-
-		Cube * scoreDigit = new Cube;
-		scoreDigit->pos = XMVectorSet(-10+i*1.1, -1, 5, 1);
-		scoreDigit->originPos = XMVectorSet(0, -1, 5, 1);
-		scoreDigit->scale = XMVectorSet(1.0f, 1.2f, 1.0f, 1.0f);
-		XMStoreFloat4x4(&scoreDigit->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(scoreDigit->scale), XMMatrixTranslationFromVector(scoreDigit->pos)));
-		XMStoreFloat3(&scoreDigit->mMeshBox.Center, scoreDigit->pos);
-		XMVECTOR SDhalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f);
-		XMStoreFloat3(&scoreDigit->mMeshBox.Extents, SDhalfSize);
-		scoreDigit->menuTexture = numToDraw;
-		scoreDigit->isMenu = true;
-		Game::cubes.push_back(scoreDigit);
-	}
-
-	//SINGLE DIGIT SCORE BOX
-	for (int i = 0; i < 5; i++)
-	{
-		std::stringstream toDraw;
-		toDraw << medHScore;//change this to the float you want to draw
-		int numToDraw = toDraw.str()[i] + 14 - 48;
-		if (toDraw.str()[i] == 46)
-			numToDraw = HSDOTb;
-
-		Cube * scoreDigit = new Cube;
-		scoreDigit->pos = XMVectorSet(-2 + i*1.1, -1, 5, 1);
-		scoreDigit->originPos = XMVectorSet(0, -1, 5, 1);
-		scoreDigit->scale = XMVectorSet(1.0f, 1.2f, 1.0f, 1.0f);
-		XMStoreFloat4x4(&scoreDigit->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(scoreDigit->scale), XMMatrixTranslationFromVector(scoreDigit->pos)));
-		XMStoreFloat3(&scoreDigit->mMeshBox.Center, scoreDigit->pos);
-		XMVECTOR SDhalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f);
-		XMStoreFloat3(&scoreDigit->mMeshBox.Extents, SDhalfSize);
-		scoreDigit->menuTexture = numToDraw;
-		scoreDigit->isMenu = true;
-		Game::cubes.push_back(scoreDigit);
-	}
-
-	//SINGLE DIGIT SCORE BOX
-	for (int i = 0; i < 5; i++)
-	{
-		std::stringstream toDraw;
-		toDraw << lrgHScore;//change this to the float you want to draw
-		int numToDraw = toDraw.str()[i] + 14 - 48;
-		if (toDraw.str()[i] == 46)
-		numToDraw = HSDOTb;
-
-
-		Cube * scoreDigit = new Cube;
-		scoreDigit->pos = XMVectorSet(5 + i*1.1, -1, 5, 1);
-		scoreDigit->originPos = XMVectorSet(0, -1, 5, 1);
-		scoreDigit->scale = XMVectorSet(1.0f, 1.2f, 1.0f, 1.0f);
-		XMStoreFloat4x4(&scoreDigit->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(scoreDigit->scale), XMMatrixTranslationFromVector(scoreDigit->pos)));
-		XMStoreFloat3(&scoreDigit->mMeshBox.Center, scoreDigit->pos);
-		XMVECTOR SDhalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f);
-		XMStoreFloat3(&scoreDigit->mMeshBox.Extents, SDhalfSize);
-		scoreDigit->menuTexture = numToDraw;
-		scoreDigit->isMenu = true;
-		Game::cubes.push_back(scoreDigit);
-	}
-	
 	// EASY BUTTON
 	Cube * easyButton = new Cube;
 	easyButton->pos = XMVectorSet(-7, 3, 5, 1);
@@ -1711,6 +1644,73 @@ void Game::CreateMenu()
 	musicButton->menuTexture = MUSICb;
 	musicButton->isMenu = true;
 	Game::cubes.push_back(musicButton);
+
+	//SINGLE DIGIT SCORE BOX
+	for (int i = 0; i < 5; i++)
+	{
+		std::stringstream toDraw;
+		toDraw << smlHScore;
+		int numToDraw = toDraw.str()[i] + 14 - 48;
+		if (toDraw.str()[i] == 46)
+			numToDraw = HSDOTb;
+
+		Cube * scoreDigit = new Cube;
+		scoreDigit->pos = XMVectorSet(-10+i*1.1, -1, 5, 1);
+		scoreDigit->originPos = XMVectorSet(0, -1, 5, 1);
+		scoreDigit->scale = XMVectorSet(1.0f, 1.2f, 1.0f, 1.0f);
+		XMStoreFloat4x4(&scoreDigit->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(scoreDigit->scale), XMMatrixTranslationFromVector(scoreDigit->pos)));
+		XMStoreFloat3(&scoreDigit->mMeshBox.Center, scoreDigit->pos);
+		XMVECTOR SDhalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f);
+		XMStoreFloat3(&scoreDigit->mMeshBox.Extents, SDhalfSize);
+		scoreDigit->menuTexture = numToDraw;
+		scoreDigit->isMenu = true;
+		Game::cubes.push_back(scoreDigit);
+	}
+
+	//SINGLE DIGIT SCORE BOX
+	for (int i = 0; i < 5; i++)
+	{
+		std::stringstream toDraw;
+		toDraw << medHScore;//change this to the float you want to draw
+		int numToDraw = toDraw.str()[i] + 14 - 48;
+		if (toDraw.str()[i] == 46)
+			numToDraw = HSDOTb;
+
+		Cube * scoreDigit = new Cube;
+		scoreDigit->pos = XMVectorSet(-2 + i*1.1, -1, 5, 1);
+		scoreDigit->originPos = XMVectorSet(0, -1, 5, 1);
+		scoreDigit->scale = XMVectorSet(1.0f, 1.2f, 1.0f, 1.0f);
+		XMStoreFloat4x4(&scoreDigit->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(scoreDigit->scale), XMMatrixTranslationFromVector(scoreDigit->pos)));
+		XMStoreFloat3(&scoreDigit->mMeshBox.Center, scoreDigit->pos);
+		XMVECTOR SDhalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f);
+		XMStoreFloat3(&scoreDigit->mMeshBox.Extents, SDhalfSize);
+		scoreDigit->menuTexture = numToDraw;
+		scoreDigit->isMenu = true;
+		Game::cubes.push_back(scoreDigit);
+	}
+
+	//SINGLE DIGIT SCORE BOX
+	for (int i = 0; i < 5; i++)
+	{
+		std::stringstream toDraw;
+		toDraw << lrgHScore;//change this to the float you want to draw
+		int numToDraw = toDraw.str()[i] + 14 - 48;
+		if (toDraw.str()[i] == 46)
+		numToDraw = HSDOTb;
+
+
+		Cube * scoreDigit = new Cube;
+		scoreDigit->pos = XMVectorSet(5 + i*1.1, -1, 5, 1);
+		scoreDigit->originPos = XMVectorSet(0, -1, 5, 1);
+		scoreDigit->scale = XMVectorSet(1.0f, 1.2f, 1.0f, 1.0f);
+		XMStoreFloat4x4(&scoreDigit->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(scoreDigit->scale), XMMatrixTranslationFromVector(scoreDigit->pos)));
+		XMStoreFloat3(&scoreDigit->mMeshBox.Center, scoreDigit->pos);
+		XMVECTOR SDhalfSize = XMVectorSet(5.0f, 1.0f, 0.5f, 1.0f);
+		XMStoreFloat3(&scoreDigit->mMeshBox.Extents, SDhalfSize);
+		scoreDigit->menuTexture = numToDraw;
+		scoreDigit->isMenu = true;
+		Game::cubes.push_back(scoreDigit);
+	}
 }
 
 void Game::CreateHud()
@@ -1806,7 +1806,7 @@ void Game::IndentDiff(int index)
 {
 	if (!AreSameVec(cubes[index]->pos, cubes[index]->originPos * PushBack))
 	{
-		for (int i = 2; i < 5; ++i)
+		for (int i = 3; i < 6; ++i)
 		{
 			cubes[i]->pos = cubes[i]->originPos;
 			XMStoreFloat4x4(&cubes[i]->localWorld, XMMatrixScalingFromVector(cubes[i]->scale) * XMMatrixTranslationFromVector(cubes[i]->pos));
@@ -1815,9 +1815,9 @@ void Game::IndentDiff(int index)
 		cubes[index]->pos = curPos * PushBack;
 		XMStoreFloat4x4(&cubes[index]->localWorld, XMMatrixScalingFromVector(cubes[index]->scale) * XMMatrixTranslationFromVector(cubes[index]->pos));
 	}
-	cubes[2]->menuTexture = EASYb;
-	cubes[3]->menuTexture = MEDIUMb;
-	cubes[4]->menuTexture = HARDb;
+	cubes[3]->menuTexture = EASYb;
+	cubes[4]->menuTexture = MEDIUMb;
+	cubes[5]->menuTexture = HARDb;
 }
 
 void Game::SetUpLevelData(int mines)
