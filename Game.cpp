@@ -1391,11 +1391,13 @@ void Game::Pick(int sx, int sy, int button)
 					//cubes.erase(cubes.begin() + place);
 					break;
 				case Cube::MINE:
+					result = system->playSound(FMOD_CHANNEL_FREE, sound3, false, &channel4);
+					ERRCHECK(result);
+
 					MessageBox(0, L"Please Try again", L"You Lose", MB_OK);
 					timerOn = false;
 					timer = 0;
-					result = system->playSound(FMOD_CHANNEL_FREE, sound3, false, &channel4);
-					ERRCHECK(result);
+					
 					CleanLevel();
 					MakeLevel(levelWidth, levelHeight, levelLength);
 					break;
