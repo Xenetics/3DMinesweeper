@@ -761,9 +761,6 @@ void Game::DrawScene()
 			//draw hud
 			for (int i = 0; i < HudCubes.size(); i++)
 			{
-				
-
-
 
 				//lock the position to the camera
 				//move it to camera transform along mLook vector
@@ -810,8 +807,13 @@ void Game::DrawScene()
 				XMVECTOR Up = XMVector3Cross(Backwards, Right);
 				XMMATRIX rot(Right, Up, Backwards, XMVectorSet(0, 0, 0, 1)); 
 
+				//this does not work as intended
+				XMMATRIX otherRot = XMMatrixLookAtLH(mCam.GetPositionXM(), XMLoadFloat3(&newPos), XMVectorSet(0.0, 1.0, 0.0, 1.0));
+				otherRot._41 = 0.0f;
+				otherRot._42 = 0.0f;
+				otherRot._43 = 0.0f;
 
-				//change the scale so it does not load from the struct
+				//draw bb
 				XMMATRIX world = XMMatrixMultiply(rot, XMMatrixMultiply(XMMatrixScalingFromVector(newScale), XMMatrixTranslationFromVector(XMLoadFloat3(&newPos))));
 				XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
 				XMMATRIX worldViewProj = world*view*proj;
