@@ -127,6 +127,7 @@
     <ClInclude Include="xnacollision.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\DirectX-Platformer\MeshView\fmodex.dll" />
     <None Include="FX\LightHelper.fx" />
   </ItemGroup>
   <ItemGroup>

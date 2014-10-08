@@ -124,6 +124,7 @@
     <None Include="FX\LightHelper.fx">
       <Filter>FX</Filter>
     </None>
+    <None Include="..\DirectX-Platformer\MeshView\fmodex.dll" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="Effects11.lib">

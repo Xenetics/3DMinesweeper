@@ -214,7 +214,7 @@ void Camera::Roll(float angle)
 	XMStoreFloat3(&mRight, XMVector3TransformNormal(XMLoadFloat3(&mLook), R));
 }
 
-void Camera::OrbitHorizontal(float angle)//mostly right (may i need to change the rotation along the mLook vector too?)
+void Camera::OrbitHorizontal(float angle)//correct
 {
 	//get the angle between the up of the camera and the up of the world
 
@@ -238,15 +238,34 @@ void Camera::OrbitHorizontal(float angle)//mostly right (may i need to change th
 
 void Camera::OrbitVertical(float angle)
 {
+
+	//orbit back to the starting position
+	//this orbit angle is not quite right.
+	float orbitAngle = XMVectorGetX(XMVector3AngleBetweenVectors(XMLoadFloat3(&XMFLOAT3(0.0, 0.0, 1.0)), XMVector3Cross(GetRightXM(), XMVectorSet(0.0, 1.0, 0.0, 1.0))));
+	//special case for when you pass 180
+	if (mPosition.x < 0)
+		orbitAngle = 180 + (90 - orbitAngle);
+
+	OrbitHorizontal(orbitAngle);
+
+
 	//get the angle between the right? of the camera and the right? of the world
+	float check = XMVectorGetX(XMVector3AngleBetweenVectors(XMLoadFloat3(&XMFLOAT3(0.0, 0.0, 1.0)), XMLoadFloat3(&mLook)));
+	if (check < MathHelper::Pi * 0.45 ||
+		((mPosition.y > 0 && angle < 0 ) ||
+		((mPosition.y < 0 && angle > 0)))
+		)
+	{
+		//pitch the camaera by that angle
+		XMVECTOR offsetAngle = XMVector3AngleBetweenVectors(XMLoadFloat3(&XMFLOAT3(1.0, 0.0, 0.0)), XMLoadFloat3(&mRight));
+		RotateY(XMVectorGetX(offsetAngle) + 0.001f);
 
-	//pitch the camaera by that angle
-	XMVECTOR offsetAngle = XMVector3AngleBetweenVectors(XMLoadFloat3(&XMFLOAT3(1.0, 0.0, 0.0)), XMLoadFloat3(&mRight));
-	RotateY(XMVectorGetX(offsetAngle) + 0.001f);
-
-	XMMATRIX matrixRot = XMMatrixRotationX(angle);
-	XMStoreFloat3(&mPosition, XMVector3TransformNormal(XMLoadFloat3(&mPosition), matrixRot));
-	XMStoreFloat3(&mRight, XMVector3TransformNormal(XMLoadFloat3(&mRight), matrixRot));
+		XMMATRIX matrixRot = XMMatrixRotationX(angle);
+		XMStoreFloat3(&mPosition, XMVector3TransformNormal(XMLoadFloat3(&mPosition), matrixRot));
+		XMStoreFloat3(&mRight, XMVector3TransformNormal(XMLoadFloat3(&mRight), matrixRot));
+	}
+	//move back
+	OrbitHorizontal(-orbitAngle);
 
 	//look at the center
 	XMFLOAT3 zero(0.01, 0.01, 0.01);

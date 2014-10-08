@@ -42,13 +42,13 @@
 //DEFINES
 #define EPSILON 0.00001
 //level sizes must be even numbers and less then 12
-#define SML_LVL_SIZE 4
-#define MED_LVL_SIZE 6
+#define SML_LVL_SIZE 6
+#define MED_LVL_SIZE 8
 #define LRG_LVL_SIZE 10
 
-#define SML_NUM_MINES 2
-#define MED_NUM_MINES 28
-#define LRG_NUM_MINES 100
+#define SML_NUM_MINES 28
+#define MED_NUM_MINES 52
+#define LRG_NUM_MINES 140
 
 #define SEED 2
 
@@ -73,6 +73,7 @@ class Game : public D3DApp
 {
 public:
 	std::vector<Cube*> cubes;
+	std::vector<Cube*> HudCubes;
 
 	Game(HINSTANCE hInstance);
 	~Game();
@@ -91,6 +92,8 @@ public:
 	void MenuLighting();
 	void GameLighting();
 
+	
+
 private:
 	void BuildGeometryBuffers();
 
@@ -103,7 +106,7 @@ private:
 	FileWriter highscoreFile;
 
 	float smlHScore = 155.56467;
-	float midHScore = 152.67979;
+	float medHScore = 152.67979;
 	float lrgHScore = 157.78789;
 
 private:
@@ -199,6 +202,7 @@ public:
 	void CleanLevel(); //cleans the level data before loading new level
 	void InitTextures();
 	void SetUpLevelData(int mines);
+	void CreateHud();
 	bool isLevelSet = false;
 	int CheckBlockSides(int placeInArray);
 	std::vector<int> cubesChecked;
@@ -263,7 +267,8 @@ highscoreFile("Highscores.hst")
 	mPickedTriangleMat.Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
 	mPickedTriangleMat.Reflect	= XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	
-	srand(SEED);//time(NULL));
+	//srand(SEED);
+	srand(time(NULL));
 	//MakeLevel(5, 5, 5); //makes the cube of blocks.
 	
 
@@ -275,12 +280,6 @@ highscoreFile("Highscores.hst")
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixMultiply(MeshScale, MeshOffset));
 	//XMStoreFloat4x4(&mMeshWorld, XMMatrixTranslation(levelWidth*0.5f, levelLength * 0.5f, levelHeight * 0.5f));
 	mCam.SetPosition(0.0f, 0.0f, -15.0f);
-
-	int timer = 0;
-
-	std::vector<std::string> smlScore = highscoreFile.ReadData("smlScore");
-	int jam = 0;
-	
 }
 
 Game::~Game()
@@ -471,6 +470,15 @@ bool Game::Init()
 	Effects::InitAll(md3dDevice);
 	InputLayouts::InitAll(md3dDevice);
 
+	//load highscores
+	std::string fileOut = highscoreFile.ReadData("smlScore")[0];
+	smlHScore = atof(fileOut.c_str());
+	fileOut = highscoreFile.ReadData("medScore")[0];
+	medHScore = atof(fileOut.c_str());
+	fileOut = highscoreFile.ReadData("lrgScore")[0];
+	lrgHScore = atof(fileOut.c_str());
+
+
 	InitFMOD();
 	InitTextures();
 	CreateMenu();
@@ -632,8 +640,6 @@ void Game::DrawScene()
 	activeTexTech->GetDesc( &techDesc );
     for(UINT p = 0; p < techDesc.Passes; ++p)
     {
-		if (GetAsyncKeyState('1') & 0x8000)md3dImmediateContext->RSSetState(RenderStates::WireframeRS);
-
 		md3dImmediateContext->IASetVertexBuffers(0, 1, &mBoxVB, &stride, &offset);
 		md3dImmediateContext->IASetIndexBuffer(mBoxIB, DXGI_FORMAT_R32_UINT, 0);
 
@@ -644,7 +650,7 @@ void Game::DrawScene()
 			{
 				if (cubes[i] != NULL)
 				{
-					XMMATRIX world = /*XMLoadFloat4x4(&mBoxWorld);*/XMMatrixTranslationFromVector(cubes[i]->pos);
+					XMMATRIX world = XMMatrixTranslationFromVector(cubes[i]->pos);//XMLoadFloat4x4(&mBoxWorld);
 					XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
 					XMMATRIX worldViewProj = world*view*proj;
 
@@ -707,25 +713,201 @@ void Game::DrawScene()
 					
 					activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
 					md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
-				
+
 					// Restore default
 					md3dImmediateContext->RSSetState(0);
-					if (mPickedTriangle != -1)
-					{
-						// Change depth test from < to <= so that if we draw the same triangle twice, it will still pass
-						// the depth test.  This is because we redraw the picked triangle with a different material
-						// to highlight it.  
-
-						md3dImmediateContext->OMSetDepthStencilState(RenderStates::LessEqualDSS, 0);
-
-						Effects::BasicFX->SetMaterial(mPickedTriangleMat);
-						activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
-						md3dImmediateContext->DrawIndexed(3, 3 * mPickedTriangle, 0);
-
-						// restore default
-						md3dImmediateContext->OMSetDepthStencilState(0, 0);
-					}
 				}
+			}
+
+			//update the hud shit(MOVETO update)
+			for (int i = 0; i < HudCubes.size(); i++)
+			{
+				if (i < HudCubes.size()*0.5)
+				{
+					std::stringstream toDraw;
+					toDraw << (timer + 0.0001);
+					int numToDraw = toDraw.str()[i] + 14 - 48;
+					//COMMENT OUT WHEN '.' TEXTURE IN
+					if (toDraw.str()[i] == 46)
+						numToDraw = HSDOTb;
+					HudCubes[i]->menuTexture = numToDraw;
+				}
+				else
+				{
+					std::stringstream toDraw;
+					switch (levelHeight)
+					{
+					case SML_LVL_SIZE:
+						toDraw << (smlHScore);
+						break;
+					case MED_LVL_SIZE:
+						toDraw << (medHScore);
+						break;
+					case LRG_LVL_SIZE:
+						toDraw << (lrgHScore);
+						break;
+					}
+					
+
+					int numToDraw = toDraw.str()[i-5] + 14 - 48;
+					//COMMENT OUT WHEN '.' TEXTURE IN
+					if (toDraw.str()[i-5] == 46)
+						numToDraw = HSDOTb;
+					HudCubes[i]->menuTexture = numToDraw;
+
+				}
+			}
+
+			//draw hud
+			for (int i = 0; i < HudCubes.size(); i++)
+			{
+
+				//lock the position to the camera
+				//move it to camera transform along mLook vector
+				XMFLOAT3 newPos = mCam.GetPosition();
+				XMFLOAT3 newRot;
+				XMVECTOR newScale = XMVectorSet(0.25, 0.3, 0.25, 1.0);
+				//move along mLook
+				XMVECTOR s = XMVectorReplicate(7);//amount 
+				XMVECTOR l = XMLoadFloat3(&mCam.GetLook()); //direction
+				XMVECTOR h = XMLoadFloat3(&newPos); // current pos
+				XMStoreFloat3(&newPos, XMVectorMultiplyAdd(s, l, h));
+
+				//move along Up
+				s = XMVectorReplicate(2.5);//amount 
+				l = XMLoadFloat3(&mCam.GetUp()); //direction
+				h = XMLoadFloat3(&newPos); // current pos
+				XMStoreFloat3(&newPos, XMVectorMultiplyAdd(s, l, h));
+
+				//Move along right
+				if (i < HudCubes.size()*0.5)
+				{
+					s = XMVectorReplicate(-3.5 + i * 0.4);//amount 
+					l = XMLoadFloat3(&mCam.GetRight()); //direction
+					h = XMLoadFloat3(&newPos); // current pos
+					XMStoreFloat3(&newPos, XMVectorMultiplyAdd(s, l, h));
+					//update the timer to correct numbers				
+				}
+				else
+				{
+					s = XMVectorReplicate(i * 0.4);//amount 
+					l = XMLoadFloat3(&mCam.GetRight()); //direction
+					h = XMLoadFloat3(&newPos); // current pos
+					XMStoreFloat3(&newPos, XMVectorMultiplyAdd(s, l, h));
+				}
+
+				// O is your object's position
+				// P is the position of the object to face
+				// U is the nominal "up" vector (typically Vector3.Y)
+				//This only works for rotation around Y (better then nothing for right now)
+				//ask Bryan about this. For turning on another axis.
+				XMVECTOR D = (XMLoadFloat3(&newPos) - mCam.GetPositionXM());
+				XMVECTOR Right = XMVector3Normalize(XMVector3Cross(XMVectorSet(0.0, 1.0, 0.0, 1.0), D));
+				XMVECTOR Backwards = XMVector3Normalize(XMVector3Cross(Right, XMVectorSet(0.0, 1.0, 0.0, 1.0)));
+				XMVECTOR Up = XMVector3Cross(Backwards, Right);
+				XMMATRIX rot(Right, Up, Backwards, XMVectorSet(0, 0, 0, 1)); 
+
+				//this does not work as intended
+				XMMATRIX otherRot = XMMatrixLookAtLH(mCam.GetPositionXM(), XMLoadFloat3(&newPos), XMVectorSet(0.0, 1.0, 0.0, 1.0));
+				otherRot._41 = 0.0f;
+				otherRot._42 = 0.0f;
+				otherRot._43 = 0.0f;
+
+				//draw bb
+				XMMATRIX world = XMMatrixMultiply(rot, XMMatrixMultiply(XMMatrixScalingFromVector(newScale), XMMatrixTranslationFromVector(XMLoadFloat3(&newPos))));
+				XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
+				XMMATRIX worldViewProj = world*view*proj;
+
+				Effects::BasicFX->SetWorld(world);
+				Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+				Effects::BasicFX->SetWorldViewProj(worldViewProj);
+				Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mTexTransform));
+				Effects::BasicFX->SetMaterial(mBoxMat);
+				//Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRV);
+				//Effects::BasicFX->SetDiffuseMap2(mDiffuseMapSRV2);
+				switch (HudCubes[i]->menuTexture) //show texture of cube
+				{
+				case LOGOb:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[0]);
+					break;
+				case PLAYb:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[1]);
+					break;
+				case EASYb:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[2]);
+					break;
+				case EASYbOn:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[3]);
+					break;
+				case MEDIUMb:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[4]);
+					break;
+				case MEDIUMbOn:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[5]);
+					break;
+				case HARDb:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[6]);
+					break;
+				case HARDbOn:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[7]);
+					break;
+				case EXITb:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[8]);
+					break;
+				case SOUNDb:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[9]);
+					break;
+				case SOUNDbOff:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[10]);
+					break;
+				case MUSICb:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[11]);
+					break;
+				case MUSICbOff:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[12]);
+					break;
+				case HIGHSCOREb:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[13]);
+					break;
+				case HSDIGITb0:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[14]);
+					break;
+				case HSDIGITb1:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[15]);
+					break;
+				case HSDIGITb2:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[16]);
+					break;
+				case HSDIGITb3:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[17]);
+					break;
+				case HSDIGITb4:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[18]);
+					break;
+				case HSDIGITb5:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[19]);
+					break;
+				case HSDIGITb6:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[20]);
+					break;
+				case HSDIGITb7:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[21]);
+					break;
+				case HSDIGITb8:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[22]);
+					break;
+				case HSDIGITb9:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[23]);
+					break;
+				case HSDOTb:
+					Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVMenuButtons[24]);
+					break;
+				}
+				activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
+				md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
+
+				// Restore default
+				md3dImmediateContext->RSSetState(0);
 			}
 		}
 		else //IF MENU
@@ -734,7 +916,7 @@ void Game::DrawScene()
 			{
 				if (cubes[i] != NULL)
 				{
-					XMMATRIX world = XMLoadFloat4x4(&cubes[i]->localWorld)/* * XMMatrixTranslationFromVector(cubes[i]->pos)*/;
+					XMMATRIX world = XMLoadFloat4x4(&cubes[i]->localWorld); //XMMatrixTranslationFromVector(cubes[i]->pos)
 					XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
 					XMMATRIX worldViewProj = world*view*proj;
 
@@ -1122,14 +1304,17 @@ void Game::Pick(int sx, int sy, int button)
 						{
 						case EASY:
 							MakeLevel(SML_LVL_SIZE, SML_LVL_SIZE, SML_LVL_SIZE);
+							CreateHud();
 							menu = false;
 							break;
 						case MEDIUM:
 							MakeLevel(MED_LVL_SIZE, MED_LVL_SIZE, MED_LVL_SIZE);
+							CreateHud();
 							menu = false;
 							break;
 						case HARD:
 							MakeLevel(LRG_LVL_SIZE, LRG_LVL_SIZE, LRG_LVL_SIZE);
+							CreateHud();
 							menu = false;
 							break;
 						case NONE:
@@ -1206,6 +1391,9 @@ void Game::Pick(int sx, int sy, int button)
 					//cubes.erase(cubes.begin() + place);
 					break;
 				case Cube::MINE:
+					MessageBox(0, L"Please Try again", L"You Lose", MB_OK);
+					timerOn = false;
+					timer = 0;
 					result = system->playSound(FMOD_CHANNEL_FREE, sound3, false, &channel4);
 					ERRCHECK(result);
 					CleanLevel();
@@ -1252,9 +1440,25 @@ void Game::Pick(int sx, int sy, int button)
 				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
 				
 				CleanLevel();
+
+				//record high score
+				std::string fileOut = highscoreFile.ReadData("smlScore")[0];
+				float highScore = atof(fileOut.c_str());
+				if (timer < highScore)
+				{
+					smlHScore = timer;
+					std::stringstream temp;
+					temp << timer;
+					highscoreFile.WriteData("smlScore", temp.str());
+				}
+				
+				
+
 				timer = 0;
 				timerOn = false;
 				MakeLevel(levelWidth, levelHeight, levelLength);
+				
+				//record high score
 				
 			}
 			break;
@@ -1270,6 +1474,18 @@ void Game::Pick(int sx, int sy, int button)
 				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
 				
 				CleanLevel();
+
+				//record high score
+				std::string fileOut = highscoreFile.ReadData("medScore")[0];
+				float highScore = atof(fileOut.c_str());
+				if (timer < highScore)
+				{
+					medHScore = timer;
+					std::stringstream temp;
+					temp << timer;
+					highscoreFile.WriteData("medScore", temp.str());
+				}
+
 				timer = 0;
 				timerOn = false;
 				MakeLevel(levelWidth, levelHeight, levelLength);
@@ -1288,6 +1504,18 @@ void Game::Pick(int sx, int sy, int button)
 				MessageBox(0, out.str().c_str(), L"Congratulations", MB_OK);
 				
 				CleanLevel();
+
+				//record high score
+				std::string fileOut = highscoreFile.ReadData("lrgScore")[0];
+				float highScore = atof(fileOut.c_str());
+				if (timer < highScore)
+				{
+					lrgHScore = timer;
+					std::stringstream temp;
+					temp << timer;
+					highscoreFile.WriteData("lrgScore", temp.str());
+				}
+
 				timer = 0;
 				timerOn = false;
 				MakeLevel(levelWidth, levelHeight, levelLength);
@@ -1365,10 +1593,10 @@ void Game::CreateMenu()
 	for (int i = 0; i < 5; i++)
 	{
 		std::stringstream toDraw;
-		toDraw << midHScore;//change this to the float you want to draw
+		toDraw << medHScore;//change this to the float you want to draw
 		int numToDraw = toDraw.str()[i] + 14 - 48;
 		if (toDraw.str()[i] == 46)
-		numToDraw = HSDOTb;
+			numToDraw = HSDOTb;
 
 		Cube * scoreDigit = new Cube;
 		scoreDigit->pos = XMVectorSet(-2 + i*1.1, -1, 5, 1);
@@ -1391,6 +1619,7 @@ void Game::CreateMenu()
 		int numToDraw = toDraw.str()[i] + 14 - 48;
 		if (toDraw.str()[i] == 46)
 		numToDraw = HSDOTb;
+
 
 		Cube * scoreDigit = new Cube;
 		scoreDigit->pos = XMVectorSet(5 + i*1.1, -1, 5, 1);
@@ -1483,6 +1712,48 @@ void Game::CreateMenu()
 	musicButton->isMenu = true;
 	Game::cubes.push_back(musicButton);
 }
+
+void Game::CreateHud()
+{
+	//SINGLE DIGIT SCORE BOX
+	for (int i = 0; i < 5; i++)
+	{
+		std::stringstream toDraw;
+		toDraw << smlHScore;
+		int numToDraw = toDraw.str()[i] + 14 - 48;
+		if (toDraw.str()[i] == 46)
+			numToDraw = HSDOTb;
+
+		Cube * scoreDigit = new Cube;
+		scoreDigit->pos = XMVectorSet(-10 + i*1.1, -1, 5, 1);
+		scoreDigit->originPos = XMVectorSet(0, -1, 5, 1);
+		scoreDigit->scale = XMVectorSet(0.5f, 0.6f, 0.5f, 1.0f);
+		XMStoreFloat4x4(&scoreDigit->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(scoreDigit->scale), XMMatrixTranslationFromVector(scoreDigit->pos)));
+		scoreDigit->menuTexture = numToDraw;
+		scoreDigit->isMenu = true;
+		HudCubes.push_back(scoreDigit);
+	}
+
+	//SINGLE DIGIT SCORE BOX
+	for (int i = 0; i < 5; i++)
+	{
+		std::stringstream toDraw;
+		toDraw << lrgHScore;//change this to the float you want to draw
+		int numToDraw = toDraw.str()[i] + 14 - 48;
+		if (toDraw.str()[i] == 46)
+			numToDraw = HSDOTb;
+
+		Cube * scoreDigit = new Cube;
+		scoreDigit->pos = XMVectorSet(5 + i*1.1, -1, 5, 1);
+		scoreDigit->originPos = XMVectorSet(0, -1, 5, 1);
+		scoreDigit->scale = XMVectorSet(0.5f, 0.6f, 0.5f, 1.0f);
+		XMStoreFloat4x4(&scoreDigit->localWorld, XMMatrixMultiply(XMMatrixScalingFromVector(scoreDigit->scale), XMMatrixTranslationFromVector(scoreDigit->pos)));
+		scoreDigit->menuTexture = numToDraw;
+		scoreDigit->isMenu = true;
+		HudCubes.push_back(scoreDigit);
+	}
+}
+
 
 void Game::CleanLevel()
 {
