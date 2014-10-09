@@ -1811,9 +1811,9 @@ void Game::CleanLevel()
 
 void Game::MenuLighting()
 {
-	mDirLights[0].Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	mDirLights[0].Ambient = XMFLOAT4(0.9f, 0.9f, 0.9f, 1.0f);
 	mDirLights[0].Diffuse = XMFLOAT4(0.9f, 0.9f, 0.9f, 1.0f);
-	mDirLights[0].Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
+	mDirLights[0].Specular = XMFLOAT4(0.9f, 0.9f, 0.9f, 16.0f);
 	mDirLights[0].Direction = XMFLOAT3(0.0f, 0.0f, 0.7f);
 
 	mDirLights[1].Ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -1865,6 +1865,7 @@ void Game::IndentDiff(int index)
 	cubes[3]->menuTexture = EASYb;
 	cubes[4]->menuTexture = MEDIUMb;
 	cubes[5]->menuTexture = HARDb;
+
 }
 
 void Game::SetUpLevelData(int mines)
