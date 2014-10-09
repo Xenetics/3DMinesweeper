@@ -115,7 +115,7 @@ private:
 	ID3D11Buffer* mBoxVB;
 	ID3D11Buffer* mBoxIB;
 
-	ID3D11ShaderResourceView* mDiffuseMapSRVBoxTypes[8];
+	ID3D11ShaderResourceView* mDiffuseMapSRVBoxTypes[9];
 	//ID3D11ShaderResourceView* mDiffuseMapSRV2;
 	//ID3D11ShaderResourceView* mDiffuseMapSRV3[120];
 	//ID3D11ShaderResourceView* mDiffuseMapSRV4;
@@ -463,6 +463,7 @@ void Game::InitTextures()
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/four.png", 0, 0, &mDiffuseMapSRVBoxTypes[5], 0));
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/five.png", 0, 0, &mDiffuseMapSRVBoxTypes[6], 0));
 	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/flag.png", 0, 0, &mDiffuseMapSRVBoxTypes[7], 0));
+	HR(D3DX11CreateShaderResourceViewFromFile(md3dDevice, L"Textures/underwater.jpg", 0, 0, &mDiffuseMapSRVBoxTypes[8], 0));
 }
 
 bool Game::Init()
@@ -723,9 +724,40 @@ void Game::DrawScene()
 					md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
 
 					// Restore default
-					//md3dImmediateContext->RSSetState(0);
+					md3dImmediateContext->RSSetState(0);
 				}
 			}
+			XMMATRIX hudView = hudCam.View();
+			XMMATRIX hudProj = hudCam.Proj();
+			XMMATRIX hudViewProj = hudCam.ViewProj();
+			//draw a background
+			XMFLOAT3 thePos = hudCam.GetPosition();
+			//move along mLook
+			XMVECTOR s = XMVectorReplicate(13);//amount 
+			XMVECTOR l = XMLoadFloat3(&hudCam.GetLook()); //direction
+			XMVECTOR h = XMLoadFloat3(&thePos); // current pos
+			XMStoreFloat3(&thePos, XMVectorMultiplyAdd(s, l, h));
+			XMVECTOR theScale = XMVectorSet(10, 10, 10, 1.0);
+
+			XMMATRIX world = XMMatrixMultiply(XMMatrixScalingFromVector(theScale), XMMatrixTranslationFromVector(XMLoadFloat3(&thePos)));
+			XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
+			XMMATRIX worldViewProj = world*hudView*hudProj; //XMLoadFloat4x4(&mDefaultView)*XMLoadFloat4x4(&mDefaultProj);
+
+			Effects::BasicFX->SetEyePosW(hudCam.GetPosition());
+			Effects::BasicFX->SetWorld(world);
+			Effects::BasicFX->SetWorldInvTranspose(worldInvTranspose);
+			Effects::BasicFX->SetWorldViewProj(worldViewProj);
+			Effects::BasicFX->SetTexTransform(XMLoadFloat4x4(&mTexTransform));
+			Effects::BasicFX->SetMaterial(mBoxMat);
+			Effects::BasicFX->SetDiffuseMap(mDiffuseMapSRVBoxTypes[8]);
+
+			activeTexTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
+			md3dImmediateContext->DrawIndexed(mBoxIndexCount, mBoxIndexOffset, mBoxVertexOffset);
+
+			// Restore default
+			md3dImmediateContext->RSSetState(0);
+
+			\
 
 			//update the hud shit(MOVETO update)
 			for (int i = 0; i < HudCubes.size(); i++)
@@ -735,11 +767,14 @@ void Game::DrawScene()
 					std::stringstream toDraw;
 					toDraw << (timer + 0.0001);
 					std::string temp = toDraw.str();
-					int numToDraw = temp[i] + 14 - 48;
-					//COMMENT OUT WHEN '.' TEXTURE IN
-					if (toDraw.str()[i] == 46)
-						numToDraw = HSDOTb;
-					HudCubes[i]->menuTexture = numToDraw;
+					if (i <= temp.size())
+					{
+						int numToDraw = temp[i] + 14 - 48;
+						//COMMENT OUT WHEN '.' TEXTURE IN
+						if (temp[i] == 46)
+							numToDraw = HSDOTb;
+						HudCubes[i]->menuTexture = numToDraw;
+					}
 				}
 				else
 				{
@@ -758,12 +793,14 @@ void Game::DrawScene()
 					}
 
 					std::string temp = toDraw.str();
-					int numToDraw = temp[i-5] + 14 - 48;
-					//COMMENT OUT WHEN '.' TEXTURE IN
-					if (toDraw.str()[i-5] == 46)
-						numToDraw = HSDOTb;
-					HudCubes[i]->menuTexture = numToDraw;
-
+					if (i <= temp.size())
+					{
+						int numToDraw = temp[i - 5] + 14 - 48;
+						//COMMENT OUT WHEN '.' TEXTURE IN
+						if (temp[i - 5] == 46)
+							numToDraw = HSDOTb;
+						HudCubes[i]->menuTexture = numToDraw;
+					}
 				}
 			}
 			/*
@@ -817,12 +854,6 @@ void Game::DrawScene()
 					h = XMLoadFloat3(&newPos); // current pos
 					XMStoreFloat3(&newPos, XMVectorMultiplyAdd(s, l, h));
 				}			
-
-				
-
-				XMMATRIX hudView = hudCam.View();
-				XMMATRIX hudProj = hudCam.Proj();
-				XMMATRIX hudViewProj = hudCam.ViewProj();
 
 				//draw bb
 				XMMATRIX world = XMMatrixMultiply(XMMatrixScalingFromVector(newScale), XMMatrixTranslationFromVector(XMLoadFloat3(&newPos)));
@@ -1041,7 +1072,7 @@ void Game::DrawScene()
 			}
 		}
 		//Draw Cubemap
-		Effects::BasicFX->SetEyePosW(mCam.GetPosition());
+		//Effects::BasicFX->SetEyePosW(mCam.GetPosition());
 		mSky->Draw(md3dImmediateContext, mCam);
     }
 
