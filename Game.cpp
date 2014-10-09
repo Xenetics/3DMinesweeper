@@ -46,7 +46,7 @@
 #define MED_LVL_SIZE 8
 #define LRG_LVL_SIZE 10
 
-#define SML_NUM_MINES 28
+#define SML_NUM_MINES 2
 #define MED_NUM_MINES 52
 #define LRG_NUM_MINES 140
 
