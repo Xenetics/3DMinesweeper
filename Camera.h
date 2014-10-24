@@ -19,6 +19,8 @@ public:
 	Camera();
 	~Camera();
 
+	float pitch = 0;
+
 	// Get/Set world camera position.
 	XMVECTOR GetPositionXM()const;
 	XMFLOAT3 GetPosition()const;
@@ -65,6 +67,7 @@ public:
 	// Rotate the camera.
 	void Pitch(float angle);
 	void RotateY(float angle);
+	void Roll(float angle);
 
 	//Orbit the camera.
 	void OrbitHorizontal(float angle);
@@ -85,6 +88,8 @@ private:
 	XMFLOAT3 mRight;
 	XMFLOAT3 mUp;
 	XMFLOAT3 mLook;
+
+	
 
 	// Cache frustum properties.
 	float mNearZ;
